@@ -405,9 +405,11 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                     // construct a string from the valid bytes in the buffer
                     val readMessage = String(readBuf, 0, msg.arg1)
                     val milliSecondsTime = System.currentTimeMillis()
-                    //Toast.makeText(this@MainActivity,"$mConnectedDeviceName : $readMessage",Toast.LENGTH_SHORT).show()
-                    //mConversationArrayAdapter.add(mConnectedDeviceName + ":  " + readMessage)
                     chatFragment.communicate(com.webianks.bluechat.Message(readMessage,milliSecondsTime,Constants.MESSAGE_TYPE_RECEIVED))
+                }
+                Constants.MESSAGE_DOZE->
+                {
+
                 }
                 Constants.MESSAGE_DEVICE_NAME -> {
                     // save the connected device's name

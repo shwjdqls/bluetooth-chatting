@@ -8,12 +8,9 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.EditText
 import android.text.Editable
 import android.util.Log
-import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.Toast
+import android.widget.*
 
 
 /**
@@ -114,6 +111,4 @@ class ChatFragment : Fragment(), View.OnClickListener {
             recyclerviewChat.scrollToPosition(0)
         }
     }
-
-
 }
