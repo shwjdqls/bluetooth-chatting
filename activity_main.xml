@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.design.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:id="@+id/relativeLayout"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <android.support.design.widget.AppBarLayout
             android:id="@+id/appBar"
@@ -20,10 +24,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="16dp"
                 android:layout_marginLeft="8dp"
-                android:layout_marginRight="8dp"
                 android:layout_marginTop="16dp"
+                android:layout_marginRight="8dp"
+                android:layout_marginBottom="16dp"
                 android:orientation="horizontal">
 
                 <TextView
@@ -89,9 +93,9 @@
                             android:id="@+id/headerLabelPaired"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="8dp"
                             android:layout_marginStart="32dp"
                             android:layout_marginTop="16dp"
+                            android:layout_marginEnd="8dp"
                             android:text="@string/paired_devices"
                             android:textColor="@color/colorPrimaryText"
                             android:textStyle="bold"
@@ -116,9 +120,9 @@
                             android:id="@+id/headerLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="8dp"
                             android:layout_marginStart="32dp"
                             android:layout_marginTop="16dp"
+                            android:layout_marginEnd="8dp"
                             android:text="@string/searching"
                             android:textColor="@color/colorPrimaryText"
                             android:textStyle="bold" />
@@ -152,10 +156,10 @@
                     android:id="@+id/search_devices"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/buttonHeight"
-                    android:layout_marginTop="10dp"
-                    android:layout_marginBottom="10dp"
-                    android:layout_marginEnd="8dp"
                     android:layout_marginStart="32dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_marginBottom="10dp"
                     android:layout_weight="1"
                     android:background="@drawable/selectable_background"
                     android:text="@string/search_devices"
@@ -167,9 +171,9 @@
                     android:id="@+id/make_visible"
                     android:layout_width="0dp"
                     android:layout_height="@dimen/buttonHeight"
-                    android:layout_marginBottom="10dp"
                     android:layout_marginTop="10dp"
                     android:layout_marginEnd="32dp"
+                    android:layout_marginBottom="10dp"
                     android:layout_weight="1"
                     android:background="@drawable/selectable_background"
                     android:text="@string/make_discoverable"
@@ -183,4 +187,4 @@
 
     </RelativeLayout>
 
-</android.support.design.widget.CoordinatorLayout>
+</android.support.constraint.ConstraintLayout>

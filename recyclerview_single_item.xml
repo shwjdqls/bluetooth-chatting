@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?attr/selectableItemBackground"
@@ -9,21 +10,26 @@
 
     <TextView
         android:id="@+id/largeLabel"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/large_label_margin"
-        android:paddingBottom="14dp"
         android:paddingLeft="24dp"
-        android:paddingRight="24dp"
         android:paddingTop="14dp"
+        android:paddingRight="24dp"
+        android:paddingBottom="14dp"
         android:text="@string/app_name"
-        android:textColor="@color/colorSecondaryText" />
+        android:textColor="@color/colorSecondaryText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/view" />
 
     <View
+        android:id="@+id/view"
         android:layout_width="match_parent"
-        android:layout_height="5dp"
-        android:layout_marginStart="@dimen/large_dash_margin"
+        android:layout_height="0dp"
         android:background="@drawable/dashed_background"
-        android:layerType="software" />
+        android:layerType="software"
+        app:layout_constraintEnd_toEndOf="@+id/largeLabel"
+        app:layout_constraintTop_toTopOf="parent" />
 
-</LinearLayout>
+</android.support.constraint.ConstraintLayout>

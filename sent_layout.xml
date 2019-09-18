@@ -2,7 +2,7 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_marginStart="@dimen/chat_bubble_left_margin"
     android:layout_marginTop="@dimen/chat_bubble_top_margin"
@@ -11,32 +11,31 @@
     android:orientation="vertical">
 
     <TextView
-        android:id="@+id/receivedMessage"
+        android:id="@+id/sentMessage"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_marginBottom="8dp"
-        android:background="@drawable/rounded_chat_received_background"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="57dp"
+        android:background="@drawable/rounded_chat_sent_background"
         android:padding="@dimen/chat_message_padding"
         android:text="@string/test_message"
-        android:textColor="@color/white"
-        app:layout_constraintBottom_toTopOf="@+id/timeStamp"
-        app:layout_constraintStart_toStartOf="parent"
+        android:textColor="@color/colorPrimaryText"
+        app:layout_constraintStart_toEndOf="@+id/timeStamp"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/timeStamp"
-        android:layout_width="363dp"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/receivedMessage"
-        android:layout_alignParentStart="true"
+        android:layout_width="180dp"
+        android:layout_height="22dp"
+        android:layout_below="@id/sentMessage"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="4dp"
         android:paddingStart="@dimen/chat_message_padding"
         android:paddingEnd="@dimen/chat_message_padding"
         android:text="@string/test_stamp"
         android:textColor="@color/grey"
         android:textSize="15sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="@+id/receivedMessage"
-        app:layout_constraintTop_toBottomOf="@+id/receivedMessage" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </android.support.constraint.ConstraintLayout>
