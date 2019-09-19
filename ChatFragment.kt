@@ -20,7 +20,7 @@ import android.widget.*
 class ChatFragment : Fragment(), View.OnClickListener {
 
     private lateinit var chatInput: EditText
-    private lateinit var sendButton: FrameLayout
+    private lateinit var sendButton: ImageButton
     private var communicationListener: CommunicationListener? = null
     private var chatAdapter: ChatAdapter? = null
     private lateinit var recyclerviewChat: RecyclerView
@@ -49,7 +49,6 @@ class ChatFragment : Fragment(), View.OnClickListener {
     private fun initViews(mView: View) {
 
         chatInput = mView.findViewById(R.id.chatInput)
-        val chatIcon: ImageView = mView.findViewById(R.id.sendIcon)
         sendButton = mView.findViewById(R.id.sendButton)
         recyclerviewChat = mView.findViewById(R.id.chatRecyclerView)
 
@@ -66,11 +65,9 @@ class ChatFragment : Fragment(), View.OnClickListener {
             override fun afterTextChanged(s: Editable) {
 
                 if (s.isNotEmpty()) {
-                    chatIcon.setImageDrawable(activity.getDrawable(R.drawable.ic_send))
                     sendButton.isClickable = true
                     sendButton.isEnabled = true
                 }else {
-                    chatIcon.setImageDrawable(activity.getDrawable(R.drawable.ic_send_depri))
                     sendButton.isClickable = false
                     sendButton.isEnabled = false
                 }
@@ -109,6 +106,7 @@ class ChatFragment : Fragment(), View.OnClickListener {
             chatAdapter = ChatAdapter(messageList.reversed(), activity)
             recyclerviewChat.adapter = chatAdapter
             recyclerviewChat.scrollToPosition(0)
+
         }
     }
 }

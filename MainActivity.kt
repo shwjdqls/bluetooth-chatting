@@ -20,6 +20,7 @@ import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.View
 import android.widget.*
 
@@ -39,7 +40,6 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     private var alreadyAskedForPermission = false
     private lateinit var headerLabel: TextView
     private lateinit var headerLabelPaired: TextView
-    private lateinit var headerLabelContainer: LinearLayout
     private lateinit var status: TextView
     private lateinit var connectionDot: ImageView
     private lateinit var  mConnectedDeviceName: String
@@ -62,13 +62,11 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         recyclerViewPaired = findViewById(R.id.recyclerViewPaired)
         headerLabel = findViewById(R.id.headerLabel)
         headerLabelPaired = findViewById(R.id.headerLabelPaired)
-        headerLabelContainer = findViewById(R.id.headerLabelContainer)
         status = findViewById(R.id.status)
         connectionDot = findViewById(R.id.connectionDot)
 
         status.text = getString(R.string.bluetooth_not_enabled)
 
-        headerLabelContainer.visibility = View.INVISIBLE
 
         if (savedInstanceState != null)
             alreadyAskedForPermission = savedInstanceState.getBoolean(PERMISSION_REQUEST_LOCATION_KEY, false)
@@ -201,7 +199,6 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
     private fun startDiscovery() {
 
-        headerLabelContainer.visibility = View.VISIBLE
         progressBar.visibility = View.VISIBLE
         headerLabel.text = getString(R.string.searching)
         mDeviceList.clear()
@@ -341,9 +338,11 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                 mChatService?.start()
             }
         }
-
         if(connected)
+        {
             showChatFragment()
+        }
+
 
     }
 
@@ -370,9 +369,9 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
                             status.text = getString(R.string.connected_to) + " "+ mConnectedDeviceName
                             connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connected))
-                            Snackbar.make(findViewById(R.id.mainScreen),"Connected to " + mConnectedDeviceName,Snackbar.LENGTH_SHORT).show()
                             //mConversationArrayAdapter.clear()
                             connected = true
+                            showChatFragment()
                         }
 
                         BluetoothChatService.STATE_CONNECTING -> {
@@ -384,7 +383,6 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                         BluetoothChatService.STATE_LISTEN, BluetoothChatService.STATE_NONE -> {
                             status.text = getString(R.string.not_connected)
                             connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_red))
-                            Snackbar.make(findViewById(R.id.mainScreen),getString(R.string.not_connected),Snackbar.LENGTH_SHORT).show()
                             connected = false
                         }
                     }
@@ -416,14 +414,12 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                     mConnectedDeviceName = msg.data.getString(Constants.DEVICE_NAME)
                     status.text = getString(R.string.connected_to) + " " +mConnectedDeviceName
                     connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connected))
-                    Snackbar.make(findViewById(R.id.mainScreen),"Connected to " + mConnectedDeviceName,Snackbar.LENGTH_SHORT).show()
                     connected = true
                     showChatFragment()
                 }
                 Constants.MESSAGE_TOAST -> {
                     status.text = getString(R.string.not_connected)
                     connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_red))
-                    Snackbar.make(findViewById(R.id.mainScreen),msg.data.getString(Constants.TOAST),Snackbar.LENGTH_SHORT).show()
                     connected = false
                   }
             }
@@ -455,10 +451,10 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
         if(!isFinishing) {
             val fragmentManager = supportFragmentManager
-            val fragmentTransaction = fragmentManager.beginTransaction()
+            //supportFragmentManager.beginTransaction().replace(R.id.chatLayoutContainer,chatFragment).commit()
+            val fragmentTransaction = fragmentManager.beginTransaction()//.replace(R.id.chatLayoutContainer,chatFragment).commit()
             chatFragment = ChatFragment.newInstance()
             chatFragment.setCommunicationListener(this)
-            fragmentTransaction.replace(R.id.mainScreen, chatFragment, "ChatFragment")
             fragmentTransaction.addToBackStack("ChatFragment")
             fragmentTransaction.commit()
         }
