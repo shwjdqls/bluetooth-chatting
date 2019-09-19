@@ -10,7 +10,7 @@
         android:layout_width="174dp"
         android:layout_height="0dp"
         android:layout_marginTop="198dp"
-        android:text="TextView"
+        android:text = "U got the some chat"
         app:layout_constraintBottom_toTopOf="@+id/popupbutton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -18,10 +18,12 @@
 
     <Button
         android:id="@+id/popupbutton"
-        android:layout_width="89dp"
+        android:layout_width="50dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="420dp"
         android:text="보기"
+        android:textColor="@color/white"
+        android:background="@color/colorPrimaryText"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/popuptext"
         app:layout_constraintTop_toBottomOf="@+id/popuptext" />
