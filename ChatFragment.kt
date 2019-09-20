@@ -1,5 +1,8 @@
 package com.webianks.bluechat
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
@@ -26,6 +29,14 @@ class ChatFragment : Fragment(), View.OnClickListener {
     private lateinit var recyclerviewChat: RecyclerView
     private val messageList = arrayListOf<Message>()
 
+    private val mReceiver = object : BroadcastReceiver()
+    {
+        override fun onReceive(p0: Context?, p1: Intent?) {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+    }
+
+
     companion object {
         fun newInstance(): ChatFragment {
             val myFragment = ChatFragment()
@@ -34,6 +45,7 @@ class ChatFragment : Fragment(), View.OnClickListener {
             return myFragment
         }
     }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

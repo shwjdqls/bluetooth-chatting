@@ -1,24 +1,23 @@
 package com.webianks.bluechat
 
+import android.app.Service
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.util.Log
 import android.bluetooth.BluetoothSocket
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
+import android.content.BroadcastReceiver
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import android.os.Bundle
 import android.os.Handler
 import java.util.*
-
-/**
- * Created by ramankit on 20/7/17.
- */
+import android.content.Intent
+import android.os.IBinder
 
 class BluetoothChatService(context: Context, handler: Handler){
-
     // Member fields
     private var mAdapter: BluetoothAdapter? = null
     private var mHandler: Handler? = null
@@ -40,6 +39,21 @@ class BluetoothChatService(context: Context, handler: Handler){
     private val NAME_SECURE = "BluetoothChatSecure"
     private val NAME_INSECURE = "BluetoothChatInsecure"
 
+    private val TAGS = "BluetoothService"
+
+    private var Broadcast_Message = ""
+    private var mReceiver : BroadcastReceiver? = null
+    private var num = 0;
+
+    inner class ServiceStart : Runnable {
+        override fun run() {
+            if(mState == STATE_CONNECTED)
+            {
+
+            }
+        }
+    }
+
     // Constants that indicate the current connection state
     companion object {
         val STATE_NONE = 0       // we're doing nothing
@@ -56,9 +70,6 @@ class BluetoothChatService(context: Context, handler: Handler){
         mHandler = handler
     }
 
-    /**
-     * Return the current connection state.
-     */
     @Synchronized fun getState(): Int {
         return mState
     }
@@ -258,7 +269,7 @@ class BluetoothChatService(context: Context, handler: Handler){
 
         mState = STATE_NONE
         // Update UI title
-       // updateUserInterfaceTitle()
+        // updateUserInterfaceTitle()
 
         // Start the service over to restart listening mode
         this@BluetoothChatService.start()
@@ -507,6 +518,4 @@ class BluetoothChatService(context: Context, handler: Handler){
 
         }
     }
-
-
 }

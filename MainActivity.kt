@@ -20,6 +20,7 @@ import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.View
 import android.widget.*
 
@@ -42,10 +43,38 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     private lateinit var status: TextView
     private lateinit var connectionDot: ImageView
     private lateinit var  mConnectedDeviceName: String
+
+    private var checkDevice : String = ""
+
     private var connected: Boolean = false
 
     private var mChatService: BluetoothChatService? = null
     private lateinit var chatFragment: ChatFragment
+
+    fun PopupService() {
+        val intent: Intent = Intent(this, popup::class.java)
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
+        this.startActivity(intent);
+    }
+
+    /*fun onStartService()
+    {
+        val intentar = Intent(this, AlramService::class.java)
+        intentar.putExtra("","")
+    }*/
+    companion object {
+        class BootReceiver : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if("android.intent.action.BOOT_COMPLETED".equals(intent.action)) {
+                    var serviceIntent = Intent(context, BluetoothChatService:: class.java)
+                    context.startService(serviceIntent)
+                    Log.d("BootReceiver", "Service loaded at start..")
+                }
+            }
+        }
+    }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -338,7 +367,6 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         }
 
         if(connected)
-            showChatFragment()
 
     }
 
@@ -367,6 +395,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                             connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connected))
                             Snackbar.make(findViewById(R.id.mainScreen),"Connected to " + mConnectedDeviceName,Snackbar.LENGTH_SHORT).show()
                             //mConversationArrayAdapter.clear()
+                            checkDevice = Constants.DEVICE_NAME
                             connected = true
                         }
 
@@ -404,7 +433,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                 }
                 Constants.MESSAGE_DOZE->
                 {
-
+                    PopupService()
                 }
                 Constants.MESSAGE_DEVICE_NAME -> {
                     // save the connected device's name
@@ -413,6 +442,13 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                     connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connected))
                     Snackbar.make(findViewById(R.id.mainScreen),"Connected to " + mConnectedDeviceName,Snackbar.LENGTH_SHORT).show()
                     connected = true
+                    if(checkDevice.equals(mConnectedDeviceName))
+                    {
+                    }
+                    else
+                    {
+                        showChatFragment()
+                    }
                 }
                 Constants.MESSAGE_TOAST -> {
                     status.text = getString(R.string.not_connected)
@@ -467,6 +503,11 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
             super.onBackPressed()
         else
             supportFragmentManager.popBackStack()
+    }
+
+    private fun showAlramChat()
+    {
+
     }
 
 }

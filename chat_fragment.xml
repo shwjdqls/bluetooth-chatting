@@ -7,27 +7,26 @@
     android:background="@color/white"
     android:clickable="true"
     android:focusable="true"
-    android:focusableInTouchMode="true"
-    >
+    android:focusableInTouchMode="true">
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/chatRecyclerView"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_height="137dp"
+        android:layout_marginTop="100dp"
         android:layout_marginBottom="443dp"
         app:layout_constraintBottom_toTopOf="@+id/sendButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintVertical_bias="0.71" />
 
     <EditText
         android:id="@+id/chatInput"
         android:layout_width="276dp"
         android:layout_height="20dp"
-        android:layout_marginStart="48dp"
+        android:layout_marginStart="44dp"
         android:layout_marginBottom="34dp"
         android:layout_weight="5"
         android:background="@drawable/rounded_background"
@@ -38,21 +37,22 @@
         app:layout_constraintHorizontal_chainStyle="@+id/sendButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/chatRecyclerView"
-        app:layout_constraintVertical_bias="0.974" />
+        app:layout_constraintVertical_bias="0.872" />
 
     <ImageButton
         android:id="@+id/sendButton"
-        android:layout_width="45dp"
-        android:layout_height="0dp"
+        android:layout_width="34dp"
+        android:layout_height="54dp"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="28dp"
-        android:layout_marginBottom="33dp"
+        android:layout_marginBottom="80dp"
         android:background="@drawable/selectable_background_rounded"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintHorizontal_bias="0.523"
         app:layout_constraintStart_toEndOf="@+id/chatInput"
-        app:layout_constraintTop_toBottomOf="@+id/chatRecyclerView"
-        app:srcCompat="@drawable/ic_send" />
+        app:srcCompat="@drawable/ic_send" /><![CDATA[
+
     />
+]]>
 </android.support.constraint.ConstraintLayout>
