@@ -5,17 +5,17 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
+import android.content.Intent.getIntent
 import android.content.pm.PackageManager
 import android.graphics.Typeface
-import android.os.Build
-import android.os.Bundle
-import android.os.Handler
+import android.os.*
 import android.os.Message
+import android.support.annotation.RequiresPermission
 import android.support.design.widget.Snackbar
+import android.support.v4.app.ActivityCompat.requestPermissions
+import android.support.v4.app.ActivityCompat.startActivityForResult
+import android.support.v4.content.ContextCompat.startActivity
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
@@ -25,7 +25,9 @@ import android.view.View
 import android.widget.*
 
 class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickListener,
-        ChatFragment.CommunicationListener {
+        ChatFragment.CommunicationListener{
+
+
 
     private val REQUEST_ENABLE_BT = 123
     private val TAG = javaClass.simpleName
@@ -44,12 +46,16 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     private lateinit var connectionDot: ImageView
     private lateinit var  mConnectedDeviceName: String
 
+    private var intentFilter = IntentFilter("com.webianks.bluechat.SEND_BROAD_CAST")
     private var checkDevice : String = ""
 
     private var connected: Boolean = false
 
     private var mChatService: BluetoothChatService? = null
+
     private lateinit var chatFragment: ChatFragment
+
+    private var mReceive : BroadcastReceiver? = null
 
     fun PopupService() {
         val intent: Intent = Intent(this, popup::class.java)
@@ -68,13 +74,52 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
             override fun onReceive(context: Context, intent: Intent) {
                 if("android.intent.action.BOOT_COMPLETED".equals(intent.action)) {
                     var serviceIntent = Intent(context, BluetoothChatService:: class.java)
+                    context.bindService(serviceIntent)
                     context.startService(serviceIntent)
                     Log.d("BootReceiver", "Service loaded at start..")
                 }
             }
         }
-    }
+        class ChatReceiver : BroadcastReceiver()
+        {
+            private lateinit var chatFragment :ChatFragment
+            override fun onReceive(context : Context, intent : Intent)
+            {
+                val mstate : String = "com.webianks.bluechat.SEND_BROAD_CAST"
 
+                val ChatState : String = intent.getStringExtra("chatState")
+                val read : String = Constants.MESSAGE_READ.toString()
+                val write : String = Constants.MESSAGE_WRITE.toString()
+
+                if(mstate.equals(intent.action))
+                {
+                    var chatIntent = Intent(context, BluetoothChatService::class.java)
+                    context.bindService(chatIntent)
+                    context.startService(chatIntent)
+
+                    //var msg : String = intent.getStringExtra("message")
+                }
+                if(read.equals(ChatState))
+                {
+                    val readMessage = intent.getStringExtra("chat")
+                    val milliSecondsTime = System.currentTimeMillis()
+                    chatFragment.communicate(com.webianks.bluechat.Message(readMessage,milliSecondsTime,Constants.MESSAGE_TYPE_RECEIVED))
+                }
+                if(write.equals(ChatState))
+                {
+                    // construct a string from the buffer
+                    val writeMessage = intent.getStringExtra("chat")
+                    val milliSecondsTime = System.currentTimeMillis()
+                    chatFragment.communicate(com.webianks.bluechat.Message(writeMessage,milliSecondsTime,Constants.MESSAGE_TYPE_SENT))
+                }
+                if(Intent.ACTION_DREAMING_STARTED.equals(intent.action))
+                {
+
+                }
+
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -128,7 +173,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         mBtAdapter = BluetoothAdapter.getDefaultAdapter()
 
         // Initialize the BluetoothChatService to perform bluetooth connections
-        mChatService = BluetoothChatService(this, mHandler)
+//        mChatService = BluetoothChatService(this, mHandler)
 
         if (mBtAdapter == null)
             showAlertAndExit()
@@ -165,6 +210,20 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         //showChatFragment()
 
     }
+
+    val serviceConnection = object : ServiceConnection {
+        override fun onServiceDisconnected(p0: ComponentName?) {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+
+        override fun onServiceConnected(p0: ComponentName?, p1: IBinder?) {
+            val binder = p1 as BluetoothChatService.LocalBinder
+            mChatService = binder.service
+            //mChatService?.setHandler(mHandler)
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+    }
+
 
     private fun makeVisible() {
 
@@ -367,7 +426,9 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         }
 
         if(connected)
+        {
 
+        }
     }
 
     override fun onDestroy() {
@@ -383,7 +444,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     object : Handler() {
         override fun handleMessage(msg: Message) {
 
-            when (msg.what) {
+                when (msg.what) {
 
                 Constants.MESSAGE_STATE_CHANGE -> {
 
@@ -396,6 +457,8 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                             Snackbar.make(findViewById(R.id.mainScreen),"Connected to " + mConnectedDeviceName,Snackbar.LENGTH_SHORT).show()
                             //mConversationArrayAdapter.clear()
                             checkDevice = Constants.DEVICE_NAME
+
+
                             connected = true
                         }
 
@@ -414,7 +477,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                     }
                 }
 
-                Constants.MESSAGE_WRITE -> {
+                /*Constants.MESSAGE_WRITE -> {
                     val writeBuf = msg.obj as ByteArray
                     // construct a string from the buffer
                     val writeMessage = String(writeBuf)
@@ -435,6 +498,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                 {
                     PopupService()
                 }
+                */
                 Constants.MESSAGE_DEVICE_NAME -> {
                     // save the connected device's name
                     mConnectedDeviceName = msg.data.getString(Constants.DEVICE_NAME)
@@ -458,6 +522,25 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                 }
             }
         }
+    }
+    /*private fun SendMesaage()
+    {
+
+    }*/
+
+    /*fun registerReceiver : BroadcastReceiver()
+    {
+        override fun onReceive(context: Context , intent: Intent)
+        {
+            var Message : String = intent.getStringExtra("message")
+        }
+    }*/
+
+    fun unregisterReceiver()
+    {
+        if(mReceive != null)
+            this.unregisterReceiver(mReceive)
+        mReceive = null
     }
 
 
@@ -509,5 +592,9 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     {
 
     }
+
+}
+
+private fun Context.bindService(serviceIntent: Intent) {
 
 }

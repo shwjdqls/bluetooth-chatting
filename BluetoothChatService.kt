@@ -2,22 +2,35 @@ package com.webianks.bluechat
 
 import android.app.Service
 import android.bluetooth.BluetoothAdapter
-import android.content.Context
 import android.util.Log
 import android.bluetooth.BluetoothSocket
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
-import android.content.BroadcastReceiver
+import android.content.*
+import android.content.ContentValues.TAG
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import android.os.Bundle
 import android.os.Handler
 import java.util.*
-import android.content.Intent
+import android.os.Binder
 import android.os.IBinder
 
-class BluetoothChatService(context: Context, handler: Handler){
+class BluetoothChatService : Service(){
+
+    inner class LocalBinder : Binder() {
+        val service: BluetoothChatService = this@BluetoothChatService
+    }
+
+    private val mBinder = LocalBinder()
+
+    override fun onBind(intent: Intent?) = mBinder
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+        return START_STICKY
+    }
     // Member fields
     private var mAdapter: BluetoothAdapter? = null
     private var mHandler: Handler? = null
@@ -45,11 +58,63 @@ class BluetoothChatService(context: Context, handler: Handler){
     private var mReceiver : BroadcastReceiver? = null
     private var num = 0;
 
-    inner class ServiceStart : Runnable {
-        override fun run() {
-            if(mState == STATE_CONNECTED)
-            {
+    private var mSecure : Boolean = false
 
+    private val intent = Intent(this, MainActivity::class.java)
+
+    private var serviceInStream: InputStream? = null
+    private var serviceOutStream: OutputStream? = null
+    /*private val mmServerSocket: BluetoothServerSocket?
+    private val mSocketType: String
+
+    init {
+        var tmp: BluetoothServerSocket? = null
+        mSocketType = if (mSecure) "Secure" else "Insecure"
+
+        // Create a new listening server socket
+        try {
+            if (mSecure) {
+                tmp = mAdapter?.listenUsingRfcommWithServiceRecord(NAME_SECURE,
+                        MY_UUID_SECURE)
+            } else {
+                tmp = mAdapter?.listenUsingInsecureRfcommWithServiceRecord(
+                        NAME_INSECURE, MY_UUID_INSECURE)
+            }
+        } catch (e: IOException) {
+            Log.e(TAG, "Socket Type: " + mSocketType + "listen() failed", e)
+        }
+
+        mmServerSocket = tmp
+        mState = STATE_LISTEN
+    }*/
+
+
+
+    inner class ServiceStart : Runnable {
+
+        private var Stopped : Boolean = false
+        override fun run() {
+
+            val buffer = ByteArray(1024)
+            var bytes: Int
+            while(!Stopped)
+            {
+                if(mState == STATE_CONNECTED)
+                {
+                    try {
+                        bytes = serviceInStream?.read(buffer) ?: 0
+                        mHandler?.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer)
+                                ?.sendToTarget()
+                    } catch (e: IOException) {
+                        Log.e(TAG, "disconnected", e)
+                        connectionLost()
+                        break
+                    }
+                }
+                else
+                {
+
+                }
             }
         }
     }
@@ -67,9 +132,11 @@ class BluetoothChatService(context: Context, handler: Handler){
         mAdapter = BluetoothAdapter.getDefaultAdapter()
         mState = STATE_NONE
         mNewState = mState
-        mHandler = handler
     }
 
+    fun setHandler(handler: Handler) {
+        mHandler = handler
+    }
     @Synchronized fun getState(): Int {
         return mState
     }
@@ -234,6 +301,7 @@ class BluetoothChatService(context: Context, handler: Handler){
         }
         // Perform the write unsynchronized
         r?.write(out)
+        intent.putExtra("chat",write(out).toString())
     }
 
 
@@ -464,7 +532,9 @@ class BluetoothChatService(context: Context, handler: Handler){
             }
 
             mmInStream = tmpIn
+            serviceInStream = tmpIn
             mmOutStream = tmpOut
+            serviceOutStream = tmpOut
             mState = STATE_CONNECTED
         }
 
@@ -506,7 +576,6 @@ class BluetoothChatService(context: Context, handler: Handler){
             } catch (e: IOException) {
                 Log.e(TAG, "Exception during write", e)
             }
-
         }
 
         fun cancel() {
