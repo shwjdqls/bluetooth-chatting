@@ -14,8 +14,6 @@ import android.view.ViewGroup
 import android.text.Editable
 import android.util.Log
 import android.widget.*
-
-
 /**
  * Created by ramankit on 24/7/17.
  */

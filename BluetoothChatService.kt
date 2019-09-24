@@ -27,6 +27,7 @@ class BluetoothChatService : Service(){
     private val mBinder = LocalBinder()
 
     override fun onBind(intent: Intent?) = mBinder
+    private lateinit var chatFragment: ChatFragment
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
@@ -61,6 +62,8 @@ class BluetoothChatService : Service(){
 
     private var mSecure : Boolean = false
 
+    private var writeChat : String = ""
+
     private val intent = Intent(this, MainActivity::class.java)
 
     private var serviceInStream: InputStream? = null
@@ -70,8 +73,35 @@ class BluetoothChatService : Service(){
 
     fun sendLocalBroadcast(intent: Intent)
     {
-        intent.putExtra("chat",write(out).toString())
+        intent.putExtra("chat",writeChat)
     }
+
+
+    private val chatReceiver = object : BroadcastReceiver()
+    {
+        override fun onReceive(p0: Context?, p1: Intent?) {
+            val buffer = ByteArray(1024)
+            var bytes: Int
+
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            if(mState== STATE_CONNECTED)
+            {
+                var intent : Intent
+                try {
+                    bytes = serviceInStream?.read(buffer) ?: 0
+                    mHandler?.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer)
+                            ?.sendToTarget()
+                } catch (e: IOException) {
+                    Log.e(TAG, "disconnected", e)
+                    connectionLost()
+                    break
+                }
+            }
+        }
+    }
+    /* Local broadcast receiver for message data*/
+
+    // data chekck
     /*private val mmServerSocket: BluetoothServerSocket?
     private val mSocketType: String
 
@@ -101,6 +131,8 @@ class BluetoothChatService : Service(){
     inner class ServiceStart : Runnable {
 
         private var Stopped : Boolean = false
+
+
         override fun run() {
 
             val buffer = ByteArray(1024)
@@ -109,19 +141,11 @@ class BluetoothChatService : Service(){
             {
                 if(mState == STATE_CONNECTED)
                 {
-                    try {
-                        bytes = serviceInStream?.read(buffer) ?: 0
-                        mHandler?.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer)
-                                ?.sendToTarget()
-                    } catch (e: IOException) {
-                        Log.e(TAG, "disconnected", e)
-                        connectionLost()
-                        break
-                    }
+                    chatFragment.communicate()
                 }
                 else
                 {
-
+                    unregisterReceiver(mReceiver)
                 }
             }
         }
@@ -309,6 +333,7 @@ class BluetoothChatService : Service(){
         }
         // Perform the write unsynchronized
         r?.write(out)
+        writeChat = write(out).toString()
         intent.putExtra("chat",write(out).toString())
     }
 

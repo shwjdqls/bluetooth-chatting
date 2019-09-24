@@ -48,13 +48,15 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     private lateinit var  mConnectedDeviceName: String
 
     private var intentFilter = IntentFilter("com.webianks.bluechat.SEND_BROAD_CAST")
+
+    private val LOCAL_KEY = "com.webianks.bluechat.SEND_BROAD_CAST"
     private var checkDevice : String = ""
 
     private var connected: Boolean = false
 
     private var mChatService: BluetoothChatService? = null
 
-    private lateinit var chatFragment: ChatFragment
+
 
     private var mReceive : BroadcastReceiver? = null
 
@@ -184,8 +186,10 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         // Get the local Bluetooth adapter
         mBtAdapter = BluetoothAdapter.getDefaultAdapter()
 
+
         val localBroadcastManager= LocalBroadcastManager.getInstance(this)
         localBroadcastManager.registerReceiver(object : BroadcastReceiver(){
+
             override fun onReceive(context : Context, intent : Intent)
             {
                 val mstate : String = "com.webianks.bluechat.SEND_BROAD_CAST"
@@ -207,21 +211,21 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                     val readMessage = intent.getStringExtra("chat")
                     val milliSecondsTime = System.currentTimeMillis()
                     chatFragment.communicate(com.webianks.bluechat.Message(readMessage,milliSecondsTime,Constants.MESSAGE_TYPE_RECEIVED))
-                }
+                }// broadcast with read
                 else if(write.equals(ChatState))
                 {
                     // construct a string from the buffer
                     val writeMessage = intent.getStringExtra("chat")
                     val milliSecondsTime = System.currentTimeMillis()
                     chatFragment.communicate(com.webianks.bluechat.Message(writeMessage,milliSecondsTime,Constants.MESSAGE_TYPE_SENT))
-                }
+                } // broadcast with write
                 else if(Intent.ACTION_DREAMING_STARTED.equals(intent.action))
                 {
-
+                    PopupService()
                 }
 
             }
-        },intentFilter())
+        },IntentFilter(LOCAL_KEY))
 
         // Initialize the BluetoothChatService to perform bluetooth connections
 //        mChatService = BluetoothChatService(this, mHandler)
@@ -484,7 +488,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
     override fun onDestroy() {
         super.onDestroy()
-        unregisterReceiver(mReceiver)
+        unregisterReceiver(mReceive)
     }
 
 
@@ -593,6 +597,8 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
     fun unregisterReceiver()
     {
+        if(mReceive !=null)
+            this.unregisterReceiver(mReceive)
     }
 
 
