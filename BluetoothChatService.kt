@@ -27,7 +27,6 @@ class BluetoothChatService : Service(){
     private val mBinder = LocalBinder()
 
     override fun onBind(intent: Intent?) = mBinder
-    private lateinit var chatFragment: ChatFragment
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
@@ -76,29 +75,15 @@ class BluetoothChatService : Service(){
         intent.putExtra("chat",writeChat)
     }
 
-
-    private val chatReceiver = object : BroadcastReceiver()
+    fun onStartcommand(intent: Intent, flaga : Int , startId: Int) : Int
     {
-        override fun onReceive(p0: Context?, p1: Intent?) {
-            val buffer = ByteArray(1024)
-            var bytes: Int
-
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-            if(mState== STATE_CONNECTED)
-            {
-                var intent : Intent
-                try {
-                    bytes = serviceInStream?.read(buffer) ?: 0
-                    mHandler?.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer)
-                            ?.sendToTarget()
-                } catch (e: IOException) {
-                    Log.e(TAG, "disconnected", e)
-                    connectionLost()
-                    break
-                }
-            }
-        }
+        return START_STICKY
     }
+
+    override fun onCreate() {
+        super.onCreate()
+    }
+
     /* Local broadcast receiver for message data*/
 
     // data chekck
@@ -128,7 +113,8 @@ class BluetoothChatService : Service(){
 
 
 
-    inner class ServiceStart : Runnable {
+    /*for chat Service Keep running*/
+    /*inner class ServiceStart : Runnable {
 
         private var Stopped : Boolean = false
 
@@ -141,7 +127,7 @@ class BluetoothChatService : Service(){
             {
                 if(mState == STATE_CONNECTED)
                 {
-                    chatFragment.communicate()
+
                 }
                 else
                 {
@@ -149,8 +135,7 @@ class BluetoothChatService : Service(){
                 }
             }
         }
-    }
-
+    }*/
     // Constants that indicate the current connection state
     companion object {
         val STATE_NONE = 0       // we're doing nothing
