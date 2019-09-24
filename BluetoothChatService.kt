@@ -1,38 +1,24 @@
 package com.webianks.bluechat
 
-import android.app.Service
 import android.bluetooth.BluetoothAdapter
+import android.content.Context
 import android.util.Log
 import android.bluetooth.BluetoothSocket
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothServerSocket
-import android.content.*
-import android.content.ContentValues.TAG
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
 import android.os.Bundle
 import android.os.Handler
 import java.util.*
-import android.os.Binder
-import android.os.IBinder
-import android.support.v4.content.LocalBroadcastManager
 
-class BluetoothChatService : Service(){
+/**
+ * Created by ramankit on 20/7/17.
+ */
 
-    inner class LocalBinder : Binder() {
-        val service: BluetoothChatService = this@BluetoothChatService
-    }
+class BluetoothChatService(context: Context, handler: Handler){
 
-    private val mBinder = LocalBinder()
-
-    override fun onBind(intent: Intent?) = mBinder
-    private lateinit var chatFragment: ChatFragment
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        super.onStartCommand(intent, flags, startId)
-        return START_STICKY
-    }
     // Member fields
     private var mAdapter: BluetoothAdapter? = null
     private var mHandler: Handler? = null
@@ -54,103 +40,6 @@ class BluetoothChatService : Service(){
     private val NAME_SECURE = "BluetoothChatSecure"
     private val NAME_INSECURE = "BluetoothChatInsecure"
 
-    private val TAGS = "BluetoothService"
-
-    private var Broadcast_Message = ""
-    private var mReceiver : BroadcastReceiver? = null
-    private var num = 0;
-
-    private var mSecure : Boolean = false
-
-    private var writeChat : String = ""
-
-    private val intent = Intent(this, MainActivity::class.java)
-
-    private var serviceInStream: InputStream? = null
-    private var serviceOutStream: OutputStream? = null
-
-    private val localBroadcastManager = LocalBroadcastManager.getInstance(this)
-
-    fun sendLocalBroadcast(intent: Intent)
-    {
-        intent.putExtra("chat",writeChat)
-    }
-
-
-    private val chatReceiver = object : BroadcastReceiver()
-    {
-        override fun onReceive(p0: Context?, p1: Intent?) {
-            val buffer = ByteArray(1024)
-            var bytes: Int
-
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-            if(mState== STATE_CONNECTED)
-            {
-                var intent : Intent
-                try {
-                    bytes = serviceInStream?.read(buffer) ?: 0
-                    mHandler?.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer)
-                            ?.sendToTarget()
-                } catch (e: IOException) {
-                    Log.e(TAG, "disconnected", e)
-                    connectionLost()
-                    break
-                }
-            }
-        }
-    }
-    /* Local broadcast receiver for message data*/
-
-    // data chekck
-    /*private val mmServerSocket: BluetoothServerSocket?
-    private val mSocketType: String
-
-    init {
-        var tmp: BluetoothServerSocket? = null
-        mSocketType = if (mSecure) "Secure" else "Insecure"
-
-        // Create a new listening server socket
-        try {
-            if (mSecure) {
-                tmp = mAdapter?.listenUsingRfcommWithServiceRecord(NAME_SECURE,
-                        MY_UUID_SECURE)
-            } else {
-                tmp = mAdapter?.listenUsingInsecureRfcommWithServiceRecord(
-                        NAME_INSECURE, MY_UUID_INSECURE)
-            }
-        } catch (e: IOException) {
-            Log.e(TAG, "Socket Type: " + mSocketType + "listen() failed", e)
-        }
-
-        mmServerSocket = tmp
-        mState = STATE_LISTEN
-    }*/
-
-
-
-    inner class ServiceStart : Runnable {
-
-        private var Stopped : Boolean = false
-
-
-        override fun run() {
-
-            val buffer = ByteArray(1024)
-            var bytes: Int
-            while(!Stopped)
-            {
-                if(mState == STATE_CONNECTED)
-                {
-                    chatFragment.communicate()
-                }
-                else
-                {
-                    unregisterReceiver(mReceiver)
-                }
-            }
-        }
-    }
-
     // Constants that indicate the current connection state
     companion object {
         val STATE_NONE = 0       // we're doing nothing
@@ -164,11 +53,12 @@ class BluetoothChatService : Service(){
         mAdapter = BluetoothAdapter.getDefaultAdapter()
         mState = STATE_NONE
         mNewState = mState
-    }
-
-    fun setHandler(handler: Handler) {
         mHandler = handler
     }
+
+    /**
+     * Return the current connection state.
+     */
     @Synchronized fun getState(): Int {
         return mState
     }
@@ -333,8 +223,6 @@ class BluetoothChatService : Service(){
         }
         // Perform the write unsynchronized
         r?.write(out)
-        writeChat = write(out).toString()
-        intent.putExtra("chat",write(out).toString())
     }
 
 
@@ -370,7 +258,7 @@ class BluetoothChatService : Service(){
 
         mState = STATE_NONE
         // Update UI title
-        // updateUserInterfaceTitle()
+       // updateUserInterfaceTitle()
 
         // Start the service over to restart listening mode
         this@BluetoothChatService.start()
@@ -565,9 +453,7 @@ class BluetoothChatService : Service(){
             }
 
             mmInStream = tmpIn
-            serviceInStream = tmpIn
             mmOutStream = tmpOut
-            serviceOutStream = tmpOut
             mState = STATE_CONNECTED
         }
 
@@ -609,6 +495,7 @@ class BluetoothChatService : Service(){
             } catch (e: IOException) {
                 Log.e(TAG, "Exception during write", e)
             }
+
         }
 
         fun cancel() {
@@ -620,4 +507,6 @@ class BluetoothChatService : Service(){
 
         }
     }
+
+
 }

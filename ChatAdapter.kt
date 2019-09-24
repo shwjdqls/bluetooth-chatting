@@ -36,7 +36,6 @@ class ChatAdapter(val chatData: List<Message>, val context: Context) : RecyclerV
             RECEIVED -> {
                 val holder: ReceivedHolder = holder as ReceivedHolder
                 holder.receivedTV.text = chatData[position].message
-                holder.popupTV.text = chatData[position].message
                 val timeMilliSeconds = chatData[position].time
                 val resultdate = Date(timeMilliSeconds)
                 holder.timeStamp.text = df.format(resultdate)
@@ -85,7 +84,6 @@ class ChatAdapter(val chatData: List<Message>, val context: Context) : RecyclerV
     inner class ReceivedHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var receivedTV = itemView.findViewById<TextView>(R.id.receivedMessage)
         var timeStamp = itemView.findViewById<TextView>(R.id.timeStamp)
-        var popupTV = itemView.findViewById<TextView>(R.id.tv_content)
     }
 
 }
