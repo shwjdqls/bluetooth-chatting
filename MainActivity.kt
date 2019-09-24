@@ -16,6 +16,7 @@ import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat.requestPermissions
 import android.support.v4.app.ActivityCompat.startActivityForResult
 import android.support.v4.content.ContextCompat.startActivity
+import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
@@ -57,6 +58,8 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
     private var mReceive : BroadcastReceiver? = null
 
+    private val localBroadcastManager = LocalBroadcastManager.getInstance(this)
+
     fun PopupService() {
         val intent: Intent = Intent(this, popup::class.java)
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -69,7 +72,10 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         val intentar = Intent(this, AlramService::class.java)
         intentar.putExtra("","")
     }*/
-    companion object {
+
+
+
+   /* companion object {
         class BootReceiver : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 if("android.intent.action.BOOT_COMPLETED".equals(intent.action)) {
@@ -99,26 +105,32 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
                     //var msg : String = intent.getStringExtra("message")
                 }
-                if(read.equals(ChatState))
+                else if(read.equals(ChatState))
                 {
                     val readMessage = intent.getStringExtra("chat")
                     val milliSecondsTime = System.currentTimeMillis()
                     chatFragment.communicate(com.webianks.bluechat.Message(readMessage,milliSecondsTime,Constants.MESSAGE_TYPE_RECEIVED))
                 }
-                if(write.equals(ChatState))
+                else if(write.equals(ChatState))
                 {
                     // construct a string from the buffer
                     val writeMessage = intent.getStringExtra("chat")
                     val milliSecondsTime = System.currentTimeMillis()
                     chatFragment.communicate(com.webianks.bluechat.Message(writeMessage,milliSecondsTime,Constants.MESSAGE_TYPE_SENT))
                 }
-                if(Intent.ACTION_DREAMING_STARTED.equals(intent.action))
+                else if(Intent.ACTION_DREAMING_STARTED.equals(intent.action))
                 {
 
                 }
 
             }
         }
+    }*/
+
+    fun SendLocalBroadcast(intent: Intent)
+    {
+        intent.putExtra("chat","")
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -171,6 +183,45 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
         // Get the local Bluetooth adapter
         mBtAdapter = BluetoothAdapter.getDefaultAdapter()
+
+        val localBroadcastManager= LocalBroadcastManager.getInstance(this)
+        localBroadcastManager.registerReceiver(object : BroadcastReceiver(){
+            override fun onReceive(context : Context, intent : Intent)
+            {
+                val mstate : String = "com.webianks.bluechat.SEND_BROAD_CAST"
+
+                val ChatState : String = intent.getStringExtra("chatState")
+                val read : String = Constants.MESSAGE_READ.toString()
+                val write : String = Constants.MESSAGE_WRITE.toString()
+
+                if(mstate.equals(intent.action))
+                {
+                    var chatIntent = Intent(context, BluetoothChatService::class.java)
+                    context.bindService(chatIntent)
+                    context.startService(chatIntent)
+
+                    //var msg : String = intent.getStringExtra("message")
+                }
+                else if(read.equals(ChatState))
+                {
+                    val readMessage = intent.getStringExtra("chat")
+                    val milliSecondsTime = System.currentTimeMillis()
+                    chatFragment.communicate(com.webianks.bluechat.Message(readMessage,milliSecondsTime,Constants.MESSAGE_TYPE_RECEIVED))
+                }
+                else if(write.equals(ChatState))
+                {
+                    // construct a string from the buffer
+                    val writeMessage = intent.getStringExtra("chat")
+                    val milliSecondsTime = System.currentTimeMillis()
+                    chatFragment.communicate(com.webianks.bluechat.Message(writeMessage,milliSecondsTime,Constants.MESSAGE_TYPE_SENT))
+                }
+                else if(Intent.ACTION_DREAMING_STARTED.equals(intent.action))
+                {
+
+                }
+
+            }
+        },intentFilter())
 
         // Initialize the BluetoothChatService to perform bluetooth connections
 //        mChatService = BluetoothChatService(this, mHandler)
@@ -536,11 +587,12 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         }
     }*/
 
+    fun registerReceiver()
+    {
+    }
+
     fun unregisterReceiver()
     {
-        if(mReceive != null)
-            this.unregisterReceiver(mReceive)
-        mReceive = null
     }
 
 

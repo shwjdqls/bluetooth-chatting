@@ -16,6 +16,7 @@ import android.os.Handler
 import java.util.*
 import android.os.Binder
 import android.os.IBinder
+import android.support.v4.content.LocalBroadcastManager
 
 class BluetoothChatService : Service(){
 
@@ -64,6 +65,13 @@ class BluetoothChatService : Service(){
 
     private var serviceInStream: InputStream? = null
     private var serviceOutStream: OutputStream? = null
+
+    private val localBroadcastManager = LocalBroadcastManager.getInstance(this)
+
+    fun sendLocalBroadcast(intent: Intent)
+    {
+        intent.putExtra("chat",write(out).toString())
+    }
     /*private val mmServerSocket: BluetoothServerSocket?
     private val mSocketType: String
 
