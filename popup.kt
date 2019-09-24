@@ -16,6 +16,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Message
 import android.support.design.widget.Snackbar
+import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
@@ -48,13 +49,23 @@ class popup : AppCompatActivity() {
         getWindow().setAttributes(layoutParams)
         setContentView(R.layout.popup)
 
+
         findViewById<Button>(R.id.btn_ok).setOnClickListener{
 
-            goFragment()
+            goFragment(null,null,null)
         }
         findViewById<Button>(R.id.btn_cancel).setOnClickListener{
             Exit()
         }
+
+        val localBroadcastManager = LocalBroadcastManager.getInstance(this)
+        localBroadcastManager.registerReceiver(object : BroadcastReceiver()
+        {
+            override fun onReceive(context: Context, intent : Intent) {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+                if()
+            }
+            },)
     }
 
     fun goFragment(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View?

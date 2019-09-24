@@ -27,9 +27,19 @@ class ChatFragment : Fragment(), View.OnClickListener {
     private lateinit var recyclerviewChat: RecyclerView
     private val messageList = arrayListOf<Message>()
 
+    private var message : String = ""
+    private var date : String = ""
+    private var time : String = ""
+
     private val mReceiver = object : BroadcastReceiver()
     {
-        override fun onReceive(p0: Context?, p1: Intent?) {
+        override fun onReceive(Context: Context, intent : Intent) {
+
+            message = intent.getStringExtra("messasge").toString()
+            date = intent.getStringExtra("date").toString()
+            time = intent.getStringExtra("time").toString()
+
+
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
     }

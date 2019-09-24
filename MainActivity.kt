@@ -46,6 +46,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     private lateinit var status: TextView
     private lateinit var connectionDot: ImageView
     private lateinit var  mConnectedDeviceName: String
+    private lateinit var chatFragment: ChatFragment
 
     private var intentFilter = IntentFilter("com.webianks.bluechat.SEND_BROAD_CAST")
 
@@ -187,6 +188,9 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         mBtAdapter = BluetoothAdapter.getDefaultAdapter()
 
 
+        /*
+        * Know this is state write or read
+        * */
         val localBroadcastManager= LocalBroadcastManager.getInstance(this)
         localBroadcastManager.registerReceiver(object : BroadcastReceiver(){
 
@@ -219,9 +223,8 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                     val milliSecondsTime = System.currentTimeMillis()
                     chatFragment.communicate(com.webianks.bluechat.Message(writeMessage,milliSecondsTime,Constants.MESSAGE_TYPE_SENT))
                 } // broadcast with write
-                else if(Intent.ACTION_DREAMING_STARTED.equals(intent.action))
+                else
                 {
-                    PopupService()
                 }
 
             }
@@ -563,6 +566,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                     connected = true
                     if(checkDevice.equals(mConnectedDeviceName))
                     {
+
                     }
                     else
                     {
