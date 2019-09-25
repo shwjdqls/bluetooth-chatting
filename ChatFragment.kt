@@ -30,6 +30,9 @@ class ChatFragment : Fragment(), View.OnClickListener {
     private var message : String = ""
     private var date : String = ""
     private var time : String = ""
+    private var intent : Intent? = null
+
+    private val delayTime = 5000;
 
     private val mReceiver = object : BroadcastReceiver()
     {
@@ -106,6 +109,7 @@ class ChatFragment : Fragment(), View.OnClickListener {
 
         if (chatInput.text.isNotEmpty()){
             communicationListener?.onCommunication(chatInput.text.toString())
+            Intent.putExtra("chatoverlay",chatInput.text.toString())
             chatInput.setText("")
         }
 
@@ -118,6 +122,11 @@ class ChatFragment : Fragment(), View.OnClickListener {
 
     interface CommunicationListener{
         fun onCommunication(message: String)
+    }
+
+    override fun onDestroy()
+    {
+
     }
 
     fun communicate(message: Message){
