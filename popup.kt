@@ -46,21 +46,27 @@ class popup : Service() {
     override fun onBind(intent: Intent?) = mBinder
 
     private lateinit var OKbt: Button
-    private lateinit var Cancelbt : Button
-    private lateinit var ContentTV :TextView
-    private lateinit var DeviceTV : TextView
+    private lateinit var Cancelbt: Button
+    private lateinit var ContentTV: TextView
 
+    private val inflate: LayoutInflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+    private val wm: WindowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
+    private val intentFileter = IntentFilter ("com.webianks.bluechat.SEND_BROAD_CAST")
     private var chatAdapter: ChatAdapter? = null
     private val messageList = arrayListOf<com.webianks.bluechat.Message>()
-    private val PERMISSION_REQUSET_OVERLAY : Int = 1;
+    private val PERMISSION_REQUSET_OVERLAY: Int = 1;
     private var alreadyAskedForPermission = false
+
+    private val WINDOW_OUT :Int = 101
+    private val Window_IN : Int = 102
+    private val Msgsave : String = ""
+    private lateinit var chatFragment: ChatFragment
 
     private lateinit var mPackageManager: PackageManager
 
 
-    var mview : View? = null
-    private var handler : Handler? = null
+    var mview: View? = null
 
     companion object {
         val ACTION_START = "start"
@@ -68,40 +74,55 @@ class popup : Service() {
     }
 
 
-    override fun onCreate()
-    {
-        super.onCreate()
 
-        requestOverlayPermission()
 
-        val localBroadcastManager = LocalBroadcastManager.getInstance(this)
-        localBroadcastManager.registerReceiver(object : BroadcastReceiver()
+    private fun show() {
+        var handler : Handler = Handler()
+        handler.postDelayed(Runnable()
         {
-            override fun onReceive(context: Context, intent : Intent) {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-                val ShowMsg = intent.getStringExtra("chat")
-            }
-            },)
-
-        handler.postDelayed(time(),5000)
+            onCreateView(inflate,null,null)
+        },5000)
     }
 
-    override fun onCreateView (inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreate() {
+        super.onCreate()
 
-        val inflate : LayoutInflater
-        val wm : WindowManager
-        mview  = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
-        wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        checkPermission()
+        requestOverlayPermission()
 
-        mview  = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
-        inflate = getSystemService (Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        var mParams : WindowManager.LayoutParams  = WindowManager.LayoutParams(
+        val listener : View.OnClickListener = View.OnClickListener {  }
+
+        val localBroadcastManager = LocalBroadcastManager.getInstance(this)
+        localBroadcastManager.registerReceiver(object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
+                val ShowMsg = intent.getStringExtra("chat")
+                val ShowDv = intent.getStringExtra("device")
+                ContentTV.setText(ShowMsg)
+            }
+        },intentFileter)
+
+        show()
+    }
+
+    fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+
+        /*val inflate: LayoutInflater
+        val wm: WindowManager*/
+        mview = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
+        //wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+
+        mview = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
+       // inflate = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        var mParams: WindowManager.LayoutParams = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                 PixelFormat.TRANSLUCENT)
+
         wm.addView(mview, mParams)
-        val mView: View  = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
+        val mView: View = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
         initViews(mView)
         return mView
     }
@@ -111,22 +132,34 @@ class popup : Service() {
         OKbt = mView.findViewById(R.id.btn_ok)
         Cancelbt = mView.findViewById(R.id.btn_cancel)
         ContentTV = mView.findViewById(R.id.tv_content)
-        DeviceTV = mView.findViewById(R.id.tv_device)
 
+        OKbt.setOnClickListener(this)
+        Cancelbt.setOnClickListener(this)
     }
 
-    override fun onRequestPermissionsResult(requestCode : Int, permissions : Array<out String> , grantResults : IntArray)
-    {
-        when(requestCode){
+    override fun onClick(p0: View?) {
 
-            PERMISSION_REQUSET_OVERLAY ->
-
-            if(grantResults[0]==PackageManager.PERMISSION_GRANTED){
-
-            }else{
-            }
+        val fragmentManager = supportFragmentManager
+        val fragmentTransaction = fragmentManager.beginTransaction()
+        chatFragment = ChatFragment.newInstance()
+        chatFragment.setCommunicationListener(this)
+        fragmentTransaction.replace(R.id.popup, "ChatFragment")
+        fragmentTransaction.addToBackStack("ChatFragment")
+        fragmentTransaction.commit()
         }
-    }\
+
+
+        /*fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+            when (requestCode) {
+
+                PERMISSION_REQUSET_OVERLAY ->
+
+                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    } else {
+                    }
+            }
+        }*/
 
     /*private fun startOverlay() {
         ImageView(this).run {
@@ -143,14 +176,8 @@ class popup : Service() {
         button = null
     }*/
 
-    private fun time() : Runnable
-    {
-
-    }
-
-    private fun checkPermission()
-    {
-        if(alreadyAskedForPermission)
+    private fun checkPermission() {
+        if (alreadyAskedForPermission)
             return
     }
 

@@ -41,6 +41,12 @@ class ChatFragment : Fragment(), View.OnClickListener {
             date = intent.getStringExtra("date").toString()
             time = intent.getStringExtra("time").toString()
 
+            if()//채팅 받는 도중 문자 받았을 때 popup으로 돌리기 위한 조건자 찾는중
+            {
+                var layIntent = Intent(context , popup::class.java)
+                context.bindService(layIntent)
+            }
+
 
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
@@ -107,8 +113,7 @@ class ChatFragment : Fragment(), View.OnClickListener {
 
         if (chatInput.text.isNotEmpty()){
             communicationListener?.onCommunication(chatInput.text.toString())
-            val intent: Intent = Intent(this, popup::class.java)
-            LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+            LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
             intent.putExtra("chatoverlay",chatInput.text.toString())
             chatInput.setText("")
             Log.e("For Overlay Data", "OVERRAY DATA")
@@ -134,4 +139,8 @@ class ChatFragment : Fragment(), View.OnClickListener {
 
         }
     }
+
+    private fun Context.bindService(serviceIntent: Intent) {
+    }
+
 }
