@@ -1,11 +1,10 @@
 package com.webianks.bluechat
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
+import android.content.*
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
 import android.provider.Settings
 import android.support.v4.app.Fragment
 import android.support.v4.content.LocalBroadcastManager
@@ -38,6 +37,18 @@ class ChatFragment : Fragment(), View.OnClickListener {
     private val PERMISSION_REQUSET_OVERLAY: Int = 134
     private var alreadyAskedForPermission : Boolean = false
 
+    private lateinit var overlayService : popup
+    val onServiceConnection = object : ServiceConnection{
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            TODO("not implemented")
+            val binder = service as popup.LocalBinder
+            overlayService = binder.service//To change body of created functions use File | Settings | File Templates.
+        }
+        override fun onServiceDisconnected(name: ComponentName?) {
+            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        }
+    }
+
 
     private val mReceiver = object : BroadcastReceiver()
     {
@@ -68,8 +79,8 @@ class ChatFragment : Fragment(), View.OnClickListener {
         checkPermission()
         requestOverlayPermission()
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !Settings.canDrawOverlays(this)) {
-            var intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packagename"))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !Settings.canDrawOverlays(this.context)) {
+            var intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:com.webianks.bluechat"))
             startActivityForResult(intent, PERMISSION_REQUSET_OVERLAY)
         }
 
@@ -85,18 +96,19 @@ class ChatFragment : Fragment(), View.OnClickListener {
 
     override fun onStart() {
         super.onStart()
+        overlayService.hide()
     }
 
     override fun onStop()
     {
-
         super.onStop()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !Settings.canDrawOverlays(this)) {
-            var intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !Settings.canDrawOverlays(this.context)) {
+            var intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:@"))
             startActivityForResult(intent, PERMISSION_REQUSET_OVERLAY)
         } else {
-            getActivity().startService(Intent(this, popup::class.java))
+            getActivity().startService(Intent(context, popup::class.java))
         }
+        overlayService.show()
 
     }
 
@@ -104,7 +116,7 @@ class ChatFragment : Fragment(), View.OnClickListener {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == PERMISSION_REQUSET_OVERLAY) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this.context)) {
                 //
             } else {
             }
@@ -186,13 +198,13 @@ class ChatFragment : Fragment(), View.OnClickListener {
     fun requestOverlayPermission() {
         if (Build.VERSION.SDK_INT >= 23) {
             val intent = Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packagename"))
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:com.webianks.bluechat"))
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        getActivity().stopService(Intent(this, popup::class.java))
+        getActivity().stopService(Intent(context, popup::class.java))
     }
 
     private fun Context.bindService(serviceIntent: Intent) {

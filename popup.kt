@@ -46,10 +46,6 @@ class popup : Service() {
 
     override fun onBind(intent: Intent?) = mBinder
 
-
-    private lateinit var OKbt: Button
-    private lateinit var Cancelbt: Button
-
     private lateinit var ContentTV: TextView
 
     private val inflate: LayoutInflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -66,6 +62,9 @@ class popup : Service() {
     private val Window_IN: Int = 102
     private val Msgsave: String = ""
     private lateinit var chatFragment: ChatFragment
+
+    private var mWindowManager : WindowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    private var mViewAdded = false
 
     private lateinit var mPackageManager: PackageManager
 
@@ -134,14 +133,20 @@ class popup : Service() {
   }*/
 
 
-    private fun show() {
+   fun show() {
         var handler: Handler = Handler()
         handler.postDelayed(Runnable()
         {
             onCreateView(inflate, null, null)
         }, 5000)
         wm.removeView(mview)
+        mViewAdded = true
+    }
 
+    fun hide()
+    {
+        mWindowManager.removeView(mview)
+        mViewAdded = false
     }
 
     fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -162,9 +167,6 @@ class popup : Service() {
     }
 
     private fun initViews(mView: View) {
-
-        OKbt = mView.findViewById(R.id.btn_ok)
-        Cancelbt = mView.findViewById(R.id.btn_cancel)
         ContentTV = mView.findViewById(R.id.tv_content)
 
 /*        OKbt.setOnClickListener(this)
@@ -194,7 +196,7 @@ class popup : Service() {
         }
     }
 
-    private fun startOverlay() {
+   /* private fun startOverlay() {
         ImageView(this).run {
             val windowManager = getSystemService(Service.WINDOW_SERVICE) as WindowManager
             setImageResource(android.R.drawable.ic_menu_add)
@@ -205,5 +207,5 @@ class popup : Service() {
         if (wm != null) {
             wm.removeView(mview)
         }
-    }
+    }*/
 }
