@@ -41,13 +41,6 @@ class ChatFragment : Fragment(), View.OnClickListener {
             date = intent.getStringExtra("date").toString()
             time = intent.getStringExtra("time").toString()
 
-            if()//채팅 받는 도중 문자 받았을 때 popup으로 돌리기 위한 조건자 찾는중
-            {
-                var layIntent = Intent(context , popup::class.java)
-                context.bindService(layIntent)
-            }
-
-
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
     }
@@ -72,6 +65,17 @@ class ChatFragment : Fragment(), View.OnClickListener {
         val mView: View  = LayoutInflater.from(activity).inflate(R.layout.chat_fragment, container, false)
         initViews(mView)
         return mView
+
+    }
+
+    override fun onrRsume()
+    {
+        super.onResume()
+    }
+    override fun onPause()
+    {
+        //여기에 popup
+        super.onPause()
     }
 
     private fun initViews(mView: View) {
