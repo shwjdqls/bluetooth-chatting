@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.Fragment
+import android.app.ProgressDialog.show
 import android.app.Service
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -45,28 +46,28 @@ class popup : Service() {
 
     override fun onBind(intent: Intent?) = mBinder
 
+
     private lateinit var OKbt: Button
     private lateinit var Cancelbt: Button
+
     private lateinit var ContentTV: TextView
 
     private val inflate: LayoutInflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-    private val wm: WindowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    private var wm: WindowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    private lateinit var mview: View
 
-    private val intentFileter = IntentFilter ("com.webianks.bluechat.SEND_BROAD_CAST")
+    private val intentFileter = IntentFilter("com.webianks.bluechat.SEND_BROAD_CAST")
     private var chatAdapter: ChatAdapter? = null
     private val messageList = arrayListOf<com.webianks.bluechat.Message>()
-    private val PERMISSION_REQUSET_OVERLAY: Int = 1;
+    private val PERMISSION_REQUSET_OVERLAY: Int = 123;
     private var alreadyAskedForPermission = false
 
-    private val WINDOW_OUT :Int = 101
-    private val Window_IN : Int = 102
-    private val Msgsave : String = ""
+    private val WINDOW_OUT: Int = 101
+    private val Window_IN: Int = 102
+    private val Msgsave: String = ""
     private lateinit var chatFragment: ChatFragment
 
     private lateinit var mPackageManager: PackageManager
-
-
-    var mview: View? = null
 
     companion object {
         val ACTION_START = "start"
@@ -74,23 +75,15 @@ class popup : Service() {
     }
 
 
-
-
-    private fun show() {
-        var handler : Handler = Handler()
-        handler.postDelayed(Runnable()
-        {
-            onCreateView(inflate,null,null)
-        },5000)
-    }
-
     override fun onCreate() {
         super.onCreate()
 
         checkPermission()
         requestOverlayPermission()
 
-        val listener : View.OnClickListener = View.OnClickListener {  }
+        val listener: View.OnClickListener = View.OnClickListener { }
+
+        wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
         val localBroadcastManager = LocalBroadcastManager.getInstance(this)
         localBroadcastManager.registerReceiver(object : BroadcastReceiver() {
@@ -98,24 +91,63 @@ class popup : Service() {
                 TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 
                 val ShowMsg = intent.getStringExtra("chat")
-                val ShowDv = intent.getStringExtra("device")
                 ContentTV.setText(ShowMsg)
             }
-        },intentFileter)
+        }, intentFileter)
 
-        show()
+        // inflate = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+
+        val mParams: WindowManager.LayoutParams = WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
+                PixelFormat.TRANSLUCENT)
+
+        wm.addView(mview, mParams)
+        //val mView: View = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
+        //initViews(mView)
+    }
+
+    private fun checkPermission() {
+        if (alreadyAskedForPermission)
+            return
+        else
+            alreadyAskedForPermission = true
+    }
+
+    fun hasOverlayPermission(): Boolean =
+            if (Build.VERSION.SDK_INT >= 23) Settings.canDrawOverlays(this) else true
+
+    fun requestOverlayPermission() {
+        if (Build.VERSION.SDK_INT >= 23) {
+            val intent = Intent(
+                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
+        }
+    }
+
+    /*fun goFragment(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View?
+  {
+      val mView: View  = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
+      initViews(mView)
+      return mView
+  }*/
+
+
+    private fun show() {
+        var handler: Handler = Handler()
+        handler.postDelayed(Runnable()
+        {
+            onCreateView(inflate, null, null)
+        }, 5000)
     }
 
     fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
-        /*val inflate: LayoutInflater
-        val wm: WindowManager*/
-        mview = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
+        //mview = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
         //wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-
-        mview = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
-       // inflate = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        var mParams: WindowManager.LayoutParams = WindowManager.LayoutParams(
+        // mview = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
+        // inflate = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val mParams  = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
@@ -146,55 +178,31 @@ class popup : Service() {
         fragmentTransaction.replace(R.id.popup, "ChatFragment")
         fragmentTransaction.addToBackStack("ChatFragment")
         fragmentTransaction.commit()
+    }
+
+
+    fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        when (requestCode) {
+
+            PERMISSION_REQUSET_OVERLAY ->
+
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                } else {
+                }
         }
+    }
 
-
-        /*fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-            when (requestCode) {
-
-                PERMISSION_REQUSET_OVERLAY ->
-
-                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                    } else {
-                    }
-            }
-        }*/
-
-    /*private fun startOverlay() {
+    private fun startOverlay() {
         ImageView(this).run {
             val windowManager = getSystemService(Service.WINDOW_SERVICE) as WindowManager
             setImageResource(android.R.drawable.ic_menu_add)
-            OKbt = popup(windowManager, this).apply {visible = true
-            }
         }
     }
+
     private fun stopOverlay() {
-        button?.run {
-            visible = false
-        }
-        button = null
-    }*/
-
-    private fun checkPermission() {
-        if (alreadyAskedForPermission)
-            return
-    }
-
-    /*fun goFragment(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View?
-    {
-        val mView: View  = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
-        initViews(mView)
-        return mView
-    }*/
-
-    fun hasOverlayPermission(): Boolean =
-            if (Build.VERSION.SDK_INT >= 23) Settings.canDrawOverlays(this) else true
-
-    fun requestOverlayPermission() {
-        if (Build.VERSION.SDK_INT >= 23) {
-            val intent = Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:com.webianks.bluechat"))
+        if (wm != null) {
+            wm.removeView(mview)
         }
     }
 }

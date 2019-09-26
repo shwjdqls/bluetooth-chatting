@@ -9,8 +9,10 @@ import android.content.*
 import android.content.Intent.getIntent
 import android.content.pm.PackageManager
 import android.graphics.Typeface
+import android.net.Uri
 import android.os.*
 import android.os.Message
+import android.provider.Settings
 import android.support.annotation.RequiresPermission
 import android.support.design.widget.Snackbar
 import android.support.v4.app.ActivityCompat.requestPermissions
@@ -57,9 +59,10 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
     private var mChatService: BluetoothChatService? = null
 
-
+    private val PERMISSION_REQUSET_OVERLAY: Int = 134;
 
     private var mReceive : BroadcastReceiver? = null
+    private val REQUEST_OVERLAY_PERMISSION = 1;
 
     private val localBroadcastManager = LocalBroadcastManager.getInstance(this)
 
@@ -187,6 +190,12 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         // Get the local Bluetooth adapter
         mBtAdapter = BluetoothAdapter.getDefaultAdapter()
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            var intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
+            startActivityForResult(intent, PERMISSION_REQUSET_OVERLAY)
+        } else {
+            startService(Intent(this, popup::class.java))
+        }
 
         /*
         * Know this is state write or read
@@ -417,6 +426,14 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
             }
 
+            if (requestCode == PERMISSION_REQUSET_OVERLAY) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+                    //
+                } else {
+                    startService(Intent(this, popup::class.java))
+                }
+            }
+
         }
         //label.setText("Bluetooth is now enabled.")
     }
@@ -426,8 +443,8 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         outState.putBoolean(PERMISSION_REQUEST_LOCATION_KEY, alreadyAskedForPermission)
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>,
-                                            grantResults: IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray)
+    {
         when (requestCode) {
 
             PERMISSION_REQUEST_LOCATION -> {
@@ -516,7 +533,6 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                             //mConversationArrayAdapter.clear()
                             checkDevice = Constants.DEVICE_NAME
 
-
                             connected = true
                         }
 
@@ -595,6 +611,14 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         }
     }*/
 
+    fun showOverlay()
+    {
+        if(connected)
+        {
+
+        }
+    }
+
     fun registerReceiver()
     {
     }
@@ -625,6 +649,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
             //mOutEditText.setText(mOutStringBuffer)
         }
     }
+
 
     private fun showChatFragment() {
 
