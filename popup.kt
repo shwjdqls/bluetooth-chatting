@@ -78,9 +78,6 @@ class popup : Service() {
     override fun onCreate() {
         super.onCreate()
 
-        checkPermission()
-        requestOverlayPermission()
-
         val listener: View.OnClickListener = View.OnClickListener { }
 
         wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
@@ -99,7 +96,6 @@ class popup : Service() {
 
         val mParams: WindowManager.LayoutParams = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                 PixelFormat.TRANSLUCENT)
 
@@ -108,7 +104,12 @@ class popup : Service() {
         //initViews(mView)
     }
 
-    private fun checkPermission() {
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+        return START_STICKY
+    }
+
+/*    private fun checkPermission() {
         if (alreadyAskedForPermission)
             return
         else
@@ -123,7 +124,7 @@ class popup : Service() {
             val intent = Intent(
                     Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
         }
-    }
+    }*/
 
     /*fun goFragment(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View?
   {
@@ -139,6 +140,8 @@ class popup : Service() {
         {
             onCreateView(inflate, null, null)
         }, 5000)
+        wm.removeView(mview)
+
     }
 
     fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -148,7 +151,6 @@ class popup : Service() {
         // mview = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
         // inflate = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val mParams  = WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                 PixelFormat.TRANSLUCENT)
@@ -165,12 +167,11 @@ class popup : Service() {
         Cancelbt = mView.findViewById(R.id.btn_cancel)
         ContentTV = mView.findViewById(R.id.tv_content)
 
-        OKbt.setOnClickListener(this)
-        Cancelbt.setOnClickListener(this)
+/*        OKbt.setOnClickListener(this)
+        Cancelbt.setOnClickListener(this)*/
     }
 
-    override fun onClick(p0: View?) {
-
+/*    fun onClick(p0: View?) {
         val fragmentManager = supportFragmentManager
         val fragmentTransaction = fragmentManager.beginTransaction()
         chatFragment = ChatFragment.newInstance()
@@ -178,7 +179,7 @@ class popup : Service() {
         fragmentTransaction.replace(R.id.popup, "ChatFragment")
         fragmentTransaction.addToBackStack("ChatFragment")
         fragmentTransaction.commit()
-    }
+    }*/
 
 
     fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
