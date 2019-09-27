@@ -5,7 +5,10 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.PendingIntent.getActivity
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothAdapter.ACTION_STATE_CHANGED
+import android.bluetooth.BluetoothAdapter.checkBluetoothAddress
 import android.bluetooth.BluetoothDevice
+import android.bluetooth.BluetoothDevice.ACTION_ACL_CONNECTED
 import android.content.*
 import android.content.Intent.getIntent
 import android.content.pm.PackageManager
@@ -63,7 +66,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     private var mOverlayService: popup? = null
 
     private val PERMISSION_REQUSET_OVERLAY: Int = 134;
-    private lateinit var overlayService : popup
+    private lateinit var overlayService: popup
 
     private var mReceive: BroadcastReceiver? = null
     private val REQUEST_OVERLAY_PERMISSION = 1;
@@ -77,65 +80,6 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         intent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP)
         this.startActivity(intent)
     }
-
-    /*fun onStartService()
-    {
-        val intentar = Intent(this, AlramService::class.java)
-        intentar.putExtra("","")
-    }*/
-
-
-    /* companion object {
-         class BootReceiver : BroadcastReceiver() {
-             override fun onReceive(context: Context, intent: Intent) {
-                 if("android.intent.action.BOOT_COMPLETED".equals(intent.action)) {
-                     var serviceIntent = Intent(context, BluetoothChatService:: class.java)
-                     context.bindService(serviceIntent)
-                     context.startService(serviceIntent)
-                     Log.d("BootReceiver", "Service loaded at start..")
-                 }
-             }
-         }
-         class ChatReceiver : BroadcastReceiver()
-         {
-             private lateinit var chatFragment :ChatFragment
-             override fun onReceive(context : Context, intent : Intent)
-             {
-                 val mstate : String = "com.webianks.bluechat.SEND_BROAD_CAST"
-
-                 val ChatState : String = intent.getStringExtra("chatState")
-                 val read : String = Constants.MESSAGE_READ.toString()
-                 val write : String = Constants.MESSAGE_WRITE.toString()
-
-                 if(mstate.equals(intent.action))
-                 {
-                     var chatIntent = Intent(context, BluetoothChatService::class.java)
-                     context.bindService(chatIntent)
-                     context.startService(chatIntent)
-
-                     //var msg : String = intent.getStringExtra("message")
-                 }
-                 else if(read.equals(ChatState))
-                 {
-                     val readMessage = intent.getStringExtra("chat")
-                     val milliSecondsTime = System.currentTimeMillis()
-                     chatFragment.communicate(com.webianks.bluechat.Message(readMessage,milliSecondsTime,Constants.MESSAGE_TYPE_RECEIVED))
-                 }
-                 else if(write.equals(ChatState))
-                 {
-                     // construct a string from the buffer
-                     val writeMessage = intent.getStringExtra("chat")
-                     val milliSecondsTime = System.currentTimeMillis()
-                     chatFragment.communicate(com.webianks.bluechat.Message(writeMessage,milliSecondsTime,Constants.MESSAGE_TYPE_SENT))
-                 }
-                 else if(Intent.ACTION_DREAMING_STARTED.equals(intent.action))
-                 {
-
-                 }
-
-             }
-         }
-     }*/
 
     fun SendLocalBroadcast(intent: Intent) {
         intent.putExtra("chat", "")
@@ -193,22 +137,20 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         // Get the local Bluetooth adapter
         mBtAdapter = BluetoothAdapter.getDefaultAdapter()
 
-/*        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && !Settings.canDrawOverlays(this)) {
-            var intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
-            startActivityForResult(intent, PERMISSION_REQUSET_OVERLAY)
-        } else {
-            startService(Intent(this, popup::class.java))
-        }*/
-
-        /*
-        * Know this is state write or read
-        * */
         val localBroadcastManager = LocalBroadcastManager.getInstance(this)
         localBroadcastManager.registerReceiver(object : BroadcastReceiver() {
 
             override fun onReceive(context: Context, intent: Intent) {
                 val mstate: String = "com.webianks.bluechat.SEND_BROAD_CAST"
 
+                val action : String = intent.action
+                val device : BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                var name : String?  = null
+
+                if(device != null)
+                {
+                    name = device.name
+                }
                 val ChatState: String = intent.getStringExtra("chatState")
                 val read: String = Constants.MESSAGE_READ.toString()
                 val write: String = Constants.MESSAGE_WRITE.toString()
@@ -226,19 +168,21 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
                     //var msg : String = intent.getStringExtra("message")
                 } else if (read.equals(ChatState)) {
-                    if(mChatService?.isAppRunning(this@MainActivity) == false)
-                    {
+
+                    val readMessage = intent.getStringExtra("chat")
+                    val milliSecondsTime = System.currentTimeMillis()
+                    chatFragment.communicate(com.webianks.bluechat.Message(readMessage, milliSecondsTime, Constants.MESSAGE_TYPE_RECEIVED))
+
+                   /* if (mChatService?.isAppRunning(this@MainActivity) == false) {
                         val readMessage = intent.getStringExtra("chat")
                         popup.tv_content.setText(readMessage)
                         overlayService.show()
-                    }
-                    else
-                    {
+                    } else {
                         overlayService.hide()
                         val readMessage = intent.getStringExtra("chat")
                         val milliSecondsTime = System.currentTimeMillis()
                         chatFragment.communicate(com.webianks.bluechat.Message(readMessage, milliSecondsTime, Constants.MESSAGE_TYPE_RECEIVED))
-                    }
+                    }*/
 
                 }// broadcast with read
 
@@ -305,11 +249,11 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     }
 
 
-
     val serviceConnection = object : ServiceConnection {
         override fun onServiceDisconnected(p0: ComponentName?) {
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
+
         override fun onServiceConnected(p0: ComponentName?, service: IBinder?) {
             val binder = service as BluetoothChatService.LocalBinder
             mChatService = binder.service
@@ -334,295 +278,292 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         if (alreadyAskedForPermission) {
             // don't check again because the dialog is still open
             return
-        } else
-        {
+        } else {
             alreadyAskedForPermission = true
         }
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
-    {
-        // Android M Permission check 
-        if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !=
-                PackageManager.PERMISSION_GRANTED) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Android M Permission check 
+            if (this.checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !=
+                    PackageManager.PERMISSION_GRANTED) {
 
-            val builder = AlertDialog.Builder(this)
-            builder.setTitle(getString(R.string.need_loc_access))
-            builder.setMessage(getString(R.string.please_grant_loc_access))
-            builder.setPositiveButton(android.R.string.ok, null)
-            builder.setOnDismissListener {
-                // the dialog will be opened so we have to save that
-                alreadyAskedForPermission = true
-                requestPermissions(arrayOf(
-                        Manifest.permission.ACCESS_COARSE_LOCATION,
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                ), PERMISSION_REQUEST_LOCATION)
+                val builder = AlertDialog.Builder(this)
+                builder.setTitle(getString(R.string.need_loc_access))
+                builder.setMessage(getString(R.string.please_grant_loc_access))
+                builder.setPositiveButton(android.R.string.ok, null)
+                builder.setOnDismissListener {
+                    // the dialog will be opened so we have to save that
+                    alreadyAskedForPermission = true
+                    requestPermissions(arrayOf(
+                            Manifest.permission.ACCESS_COARSE_LOCATION,
+                            Manifest.permission.ACCESS_FINE_LOCATION
+                    ), PERMISSION_REQUEST_LOCATION)
+                }
+                builder.show()
+
+            } else {
+                startDiscovery()
             }
-            builder.show()
-
         } else {
             startDiscovery()
+            alreadyAskedForPermission = true
         }
-    } else
-    {
-        startDiscovery()
-        alreadyAskedForPermission = true
+
     }
 
-}
+    private fun showAlertAndExit() {
 
-private fun showAlertAndExit() {
-
-    AlertDialog.Builder(this)
-            .setTitle(getString(R.string.not_compatible))
-            .setMessage(getString(R.string.no_support))
-            .setPositiveButton("Exit", { _, _ -> System.exit(0) })
-            .show()
-}
-
-private fun findDevices() {
-
-    checkPermissions()
-}
-
-private fun startDiscovery() {
-
-    progressBar.visibility = View.VISIBLE
-    headerLabel.text = getString(R.string.searching)
-    mDeviceList.clear()
-
-    // If we're already discovering, stop it
-    if (mBtAdapter?.isDiscovering ?: false)
-        mBtAdapter?.cancelDiscovery()
-
-    // Request discover from BluetoothAdapter
-    mBtAdapter?.startDiscovery()
-}
-
-// Create a BroadcastReceiver for ACTION_FOUND.
-private val mReceiver = object : BroadcastReceiver() {
-
-    override fun onReceive(context: Context, intent: Intent) {
-
-        val action = intent.action
-
-        if (BluetoothDevice.ACTION_FOUND == action) {
-            // Discovery has found a device. Get the BluetoothDevice
-            // object and its info from the Intent.
-            val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
-            val deviceName = device.name
-            val deviceHardwareAddress = device.address // MAC address
-
-            val deviceData = DeviceData(deviceName, deviceHardwareAddress)
-            mDeviceList.add(deviceData)
-
-            val setList = HashSet<DeviceData>(mDeviceList)
-            mDeviceList.clear()
-            mDeviceList.addAll(setList)
-
-            devicesAdapter.notifyDataSetChanged()
-        }
-
-        if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED == action) {
-            progressBar.visibility = View.INVISIBLE
-            headerLabel.text = getString(R.string.found)
-        }
+        AlertDialog.Builder(this)
+                .setTitle(getString(R.string.not_compatible))
+                .setMessage(getString(R.string.no_support))
+                .setPositiveButton("Exit", { _, _ -> System.exit(0) })
+                .show()
     }
-}
 
-override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    super.onActivityResult(requestCode, resultCode, data)
+    private fun findDevices() {
 
-    progressBar.visibility = View.INVISIBLE
+        checkPermissions()
+    }
 
-    if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_OK) {
-        //Bluetooth is now connected.
-        status.text = getString(R.string.not_connected)
+    private fun startDiscovery() {
 
-        // Get a set of currently paired devices
-        val pairedDevices = mBtAdapter?.bondedDevices
-        val mPairedDeviceList = arrayListOf<DeviceData>()
+        progressBar.visibility = View.VISIBLE
+        headerLabel.text = getString(R.string.searching)
+        mDeviceList.clear()
 
-        mPairedDeviceList.clear()
+        // If we're already discovering, stop it
+        if (mBtAdapter?.isDiscovering ?: false)
+            mBtAdapter?.cancelDiscovery()
 
-        // If there are paired devices, add each one to the ArrayAdapter
-        if (pairedDevices?.size ?: 0 > 0) {
-            // There are paired devices. Get the name and address of each paired device.
-            for (device in pairedDevices!!) {
+        // Request discover from BluetoothAdapter
+        mBtAdapter?.startDiscovery()
+    }
+
+    // Create a BroadcastReceiver for ACTION_FOUND.
+    private val mReceiver = object : BroadcastReceiver() {
+
+        override fun onReceive(context: Context, intent: Intent) {
+
+            val action: String = intent.action
+
+            if (BluetoothDevice.ACTION_FOUND == action) {
+                // Discovery has found a device. Get the BluetoothDevice
+                // object and its info from the Intent.
+                val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
                 val deviceName = device.name
                 val deviceHardwareAddress = device.address // MAC address
-                mPairedDeviceList.add(DeviceData(deviceName, deviceHardwareAddress))
+
+                val deviceData = DeviceData(deviceName, deviceHardwareAddress)
+                mDeviceList.add(deviceData)
+
+                val setList = HashSet<DeviceData>(mDeviceList)
+                mDeviceList.clear()
+                mDeviceList.addAll(setList)
+
+                devicesAdapter.notifyDataSetChanged()
             }
 
-            val devicesAdapter = DevicesRecyclerViewAdapter(context = this, mDeviceList = mPairedDeviceList)
-            recyclerViewPaired.adapter = devicesAdapter
-            devicesAdapter.setItemClickListener(this)
-            headerLabelPaired.visibility = View.VISIBLE
-
+            if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED == action) {
+                progressBar.visibility = View.INVISIBLE
+                headerLabel.text = getString(R.string.found)
+            }
         }
-        if (requestCode == PERMISSION_REQUSET_OVERLAY) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
-                //
-            } else {
-            }
-        }
-            }
- }
+    }
 
-override fun onSaveInstanceState(outState: Bundle) {
-    super.onSaveInstanceState(outState)
-    outState.putBoolean(PERMISSION_REQUEST_LOCATION_KEY, alreadyAskedForPermission)
-}
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
 
-override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-    when (requestCode) {
+        progressBar.visibility = View.INVISIBLE
 
-        PERMISSION_REQUEST_LOCATION -> {
-            // the request returned a result so the dialog is closed
-            alreadyAskedForPermission = false
-            if (grantResults[0] == PackageManager.PERMISSION_GRANTED &&
-                    grantResults[1] == PackageManager.PERMISSION_GRANTED) {
-                //Log.d(TAG, "Coarse and fine location permissions granted")
-                startDiscovery()
-            } else {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    val builder = AlertDialog.Builder(this)
-                    builder.setTitle(getString(R.string.fun_limted))
-                    builder.setMessage(getString(R.string.since_perm_not_granted))
-                    builder.setPositiveButton(android.R.string.ok, null)
-                    builder.show()
+        if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_OK) {
+            //Bluetooth is now connected.
+            status.text = getString(R.string.not_connected)
+
+            // Get a set of currently paired devices
+            val pairedDevices = mBtAdapter?.bondedDevices
+            val mPairedDeviceList = arrayListOf<DeviceData>()
+
+            mPairedDeviceList.clear()
+
+            // If there are paired devices, add each one to the ArrayAdapter
+            if (pairedDevices?.size ?: 0 > 0) {
+                // There are paired devices. Get the name and address of each paired device.
+                for (device in pairedDevices!!) {
+                    val deviceName = device.name
+                    val deviceHardwareAddress = device.address // MAC address
+                    mPairedDeviceList.add(DeviceData(deviceName, deviceHardwareAddress))
                 }
-            }
-        }
-    }
-}
 
-override fun itemClicked(deviceData: DeviceData) {
-    connectDevice(deviceData)
-}
-
-private fun connectDevice(deviceData: DeviceData) {
-
-    // Cancel discovery because it's costly and we're about to connect
-    mBtAdapter?.cancelDiscovery()
-    val deviceAddress = deviceData.deviceHardwareAddress
-
-    val device = mBtAdapter?.getRemoteDevice(deviceAddress)
-
-    status.text = getString(R.string.connecting)
-    connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connecting))
-
-    // Attempt to connect to the device
-    mChatService?.connect(device, true)
-
-}
-
-override fun onResume() {
-    super.onResume()
-    // Performing this check in onResume() covers the case in which BT was
-    // not enabled during onStart(), so we were paused to enable it...
-    // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
-    if (mChatService != null) {
-        // Only if the state is STATE_NONE, do we know that we haven't started already
-        if (mChatService?.getState() == BluetoothChatService.STATE_NONE) {
-            // Start the Bluetooth chat services
-            mChatService?.start()
-        }
-    }
-
-    if (connected) {
-
-    }
-}
-
-override fun onDestroy() {
-    super.onDestroy()
-    unregisterReceiver(mReceive)
-}
-
-
-/**
- * The Handler that gets information back from the BluetoothChatService
- */
-private val mHandler = @SuppressLint("HandlerLeak")
-object : Handler() {
-    override fun handleMessage(msg: Message) {
-
-        when (msg.what) {
-
-            Constants.MESSAGE_STATE_CHANGE -> {
-
-                when (msg.arg1) {
-
-                    BluetoothChatService.STATE_CONNECTED -> {
-
-                        status.text = getString(R.string.connected_to) + " " + mConnectedDeviceName
-                        connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connected))
-                        Snackbar.make(findViewById(R.id.mainScreen), "Connected to " + mConnectedDeviceName, Snackbar.LENGTH_SHORT).show()
-                        //mConversationArrayAdapter.clear()
-                        checkDevice = Constants.DEVICE_NAME
-
-                        connected = true
-                    }
-
-                    BluetoothChatService.STATE_CONNECTING -> {
-                        status.text = getString(R.string.connecting)
-                        connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connecting))
-                        connected = false
-                    }
-
-                    BluetoothChatService.STATE_LISTEN, BluetoothChatService.STATE_NONE -> {
-                        status.text = getString(R.string.not_connected)
-                        connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_red))
-                        Snackbar.make(findViewById(R.id.mainScreen), getString(R.string.not_connected), Snackbar.LENGTH_SHORT).show()
-                        connected = false
-                    }
-                }
-            }
-
-            /*Constants.MESSAGE_WRITE -> {
-                val writeBuf = msg.obj as ByteArray
-                // construct a string from the buffer
-                val writeMessage = String(writeBuf)
-                //Toast.makeText(this@MainActivity,"Me: $writeMessage",Toast.LENGTH_SHORT).show()
-                //mConversationArrayAdapter.add("Me:  " + writeMessage)
-                val milliSecondsTime = System.currentTimeMillis()
-                chatFragment.communicate(com.webianks.bluechat.Message(writeMessage,milliSecondsTime,Constants.MESSAGE_TYPE_SENT))
+                val devicesAdapter = DevicesRecyclerViewAdapter(context = this, mDeviceList = mPairedDeviceList)
+                recyclerViewPaired.adapter = devicesAdapter
+                devicesAdapter.setItemClickListener(this)
+                headerLabelPaired.visibility = View.VISIBLE
 
             }
-            Constants.MESSAGE_READ -> {
-                val readBuf = msg.obj as ByteArray
-                // construct a string from the valid bytes in the buffer
-                val readMessage = String(readBuf, 0, msg.arg1)
-                val milliSecondsTime = System.currentTimeMillis()
-                chatFragment.communicate(com.webianks.bluechat.Message(readMessage,milliSecondsTime,Constants.MESSAGE_TYPE_RECEIVED))
-            }
-            Constants.MESSAGE_DOZE->
-            {
-                PopupService()
-            }
-            */
-            Constants.MESSAGE_DEVICE_NAME -> {
-                // save the connected device's name
-                mConnectedDeviceName = msg.data.getString(Constants.DEVICE_NAME)
-                status.text = getString(R.string.connected_to) + " " + mConnectedDeviceName
-                connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connected))
-                Snackbar.make(findViewById(R.id.mainScreen), "Connected to " + mConnectedDeviceName, Snackbar.LENGTH_SHORT).show()
-                connected = true
-                if (checkDevice.equals(mConnectedDeviceName)) {
-
+            if (requestCode == PERMISSION_REQUSET_OVERLAY) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+                    //
                 } else {
-                    showChatFragment()
                 }
-            }
-            Constants.MESSAGE_TOAST -> {
-                status.text = getString(R.string.not_connected)
-                connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_red))
-                Snackbar.make(findViewById(R.id.mainScreen), msg.data.getString(Constants.TOAST), Snackbar.LENGTH_SHORT).show()
-                connected = false
             }
         }
     }
-}
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(PERMISSION_REQUEST_LOCATION_KEY, alreadyAskedForPermission)
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        when (requestCode) {
+
+            PERMISSION_REQUEST_LOCATION -> {
+                // the request returned a result so the dialog is closed
+                alreadyAskedForPermission = false
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED &&
+                        grantResults[1] == PackageManager.PERMISSION_GRANTED) {
+                    //Log.d(TAG, "Coarse and fine location permissions granted")
+                    startDiscovery()
+                } else {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        val builder = AlertDialog.Builder(this)
+                        builder.setTitle(getString(R.string.fun_limted))
+                        builder.setMessage(getString(R.string.since_perm_not_granted))
+                        builder.setPositiveButton(android.R.string.ok, null)
+                        builder.show()
+                    }
+                }
+            }
+        }
+    }
+
+    override fun itemClicked(deviceData: DeviceData) {
+        connectDevice(deviceData)
+    }
+
+    private fun connectDevice(deviceData: DeviceData) {
+
+        // Cancel discovery because it's costly and we're about to connect
+        mBtAdapter?.cancelDiscovery()
+        val deviceAddress = deviceData.deviceHardwareAddress
+
+        val device = mBtAdapter?.getRemoteDevice(deviceAddress)
+
+        status.text = getString(R.string.connecting)
+        connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connecting))
+
+        // Attempt to connect to the device
+        mChatService?.connect(device, true)
+
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Performing this check in onResume() covers the case in which BT was
+        // not enabled during onStart(), so we were paused to enable it...
+        // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
+        if (mChatService != null) {
+            // Only if the state is STATE_NONE, do we know that we haven't started already
+            if (mChatService?.getState() == BluetoothChatService.STATE_NONE) {
+                // Start the Bluetooth chat services
+                mChatService?.start()
+            }
+        }
+
+        if (connected) {
+
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(mReceive)
+    }
+
+
+    /**
+     * The Handler that gets information back from the BluetoothChatService
+     */
+    private val mHandler = @SuppressLint("HandlerLeak")
+    object : Handler() {
+        override fun handleMessage(msg: Message) {
+
+            when (msg.what) {
+
+                Constants.MESSAGE_STATE_CHANGE -> {
+
+                    when (msg.arg1) {
+
+                        BluetoothChatService.STATE_CONNECTED -> {
+
+                            status.text = getString(R.string.connected_to) + " " + mConnectedDeviceName
+                            connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connected))
+                            Snackbar.make(findViewById(R.id.mainScreen), "Connected to " + mConnectedDeviceName, Snackbar.LENGTH_SHORT).show()
+                            //mConversationArrayAdapter.clear()
+                            checkDevice = Constants.DEVICE_NAME
+
+                            connected = true
+                        }
+
+                        BluetoothChatService.STATE_CONNECTING -> {
+                            status.text = getString(R.string.connecting)
+                            connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connecting))
+                            connected = false
+                        }
+
+                        BluetoothChatService.STATE_LISTEN, BluetoothChatService.STATE_NONE -> {
+                            status.text = getString(R.string.not_connected)
+                            connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_red))
+                            Snackbar.make(findViewById(R.id.mainScreen), getString(R.string.not_connected), Snackbar.LENGTH_SHORT).show()
+                            connected = false
+                        }
+                    }
+                }
+
+                /*Constants.MESSAGE_WRITE -> {
+                    val writeBuf = msg.obj as ByteArray
+                    // construct a string from the buffer
+                    val writeMessage = String(writeBuf)
+                    //Toast.makeText(this@MainActivity,"Me: $writeMessage",Toast.LENGTH_SHORT).show()
+                    //mConversationArrayAdapter.add("Me:  " + writeMessage)
+                    val milliSecondsTime = System.currentTimeMillis()
+                    chatFragment.communicate(com.webianks.bluechat.Message(writeMessage,milliSecondsTime,Constants.MESSAGE_TYPE_SENT))
+
+                }
+                Constants.MESSAGE_READ -> {
+                    val readBuf = msg.obj as ByteArray
+                    // construct a string from the valid bytes in the buffer
+                    val readMessage = String(readBuf, 0, msg.arg1)
+                    val milliSecondsTime = System.currentTimeMillis()
+                    chatFragment.communicate(com.webianks.bluechat.Message(readMessage,milliSecondsTime,Constants.MESSAGE_TYPE_RECEIVED))
+                }
+                Constants.MESSAGE_DOZE->
+                {
+                    PopupService()
+                }
+                */
+                Constants.MESSAGE_DEVICE_NAME -> {
+                    // save the connected device's name
+                    mConnectedDeviceName = msg.data.getString(Constants.DEVICE_NAME)
+                    status.text = getString(R.string.connected_to) + " " + mConnectedDeviceName
+                    connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connected))
+                    Snackbar.make(findViewById(R.id.mainScreen), "Connected to " + mConnectedDeviceName, Snackbar.LENGTH_SHORT).show()
+                    connected = true
+                    if (checkDevice.equals(mConnectedDeviceName)) {
+
+                    } else {
+                        showChatFragment()
+                    }
+                }
+                Constants.MESSAGE_TOAST -> {
+                    status.text = getString(R.string.not_connected)
+                    connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_red))
+                    Snackbar.make(findViewById(R.id.mainScreen), msg.data.getString(Constants.TOAST), Snackbar.LENGTH_SHORT).show()
+                    connected = false
+                }
+            }
+        }
+    }
 /*private fun SendMesaage()
 {
 
@@ -636,79 +577,79 @@ object : Handler() {
     }
 }*/
 
-fun showOverlay() {
-    if (connected) {
+    fun showOverlay() {
+        if (connected) {
 
-    }
-}
-
-fun registerReceiver() {
-}
-
-fun unregisterReceiver() {
-    if (mReceive != null)
-        this.unregisterReceiver(mReceive)
-}
-
-
-private fun sendMessage(message: String) {
-
-    // Check that we're actually connected before trying anything
-    if (mChatService?.getState() != BluetoothChatService.STATE_CONNECTED) {
-        Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
-        return
+        }
     }
 
-    // Check that there's actually something to send
-    if (message.isNotEmpty()) {
-        // Get the message bytes and tell the BluetoothChatService to write
-        val send = message.toByteArray()
-        mChatService?.write(send)
-
-        // Reset out string buffer to zero and clear the edit text field
-        //mOutStringBuffer.setLength(0)
-        //mOutEditText.setText(mOutStringBuffer)
+    fun registerReceiver() {
     }
-}
 
-
-private fun showChatFragment() {
-
-    if (!isFinishing) {
-        val fragmentManager = supportFragmentManager
-        val fragmentTransaction = fragmentManager.beginTransaction()
-        chatFragment = ChatFragment.newInstance()
-        chatFragment.setCommunicationListener(this)
-        fragmentTransaction.replace(R.id.mainScreen, chatFragment, "ChatFragment")
-        fragmentTransaction.addToBackStack("ChatFragment")
-        fragmentTransaction.commit()
+    fun unregisterReceiver() {
+        if (mReceive != null)
+            this.unregisterReceiver(mReceive)
     }
-}
 
-override fun onCommunication(message: String) {
-    sendMessage(message)
-}
 
-override fun onBackPressed() {
-    if (supportFragmentManager.backStackEntryCount == 0)
-        super.onBackPressed()
-    else
-        supportFragmentManager.popBackStack()
-}
+    private fun sendMessage(message: String) {
 
-private fun showAlramChat() {
+        // Check that we're actually connected before trying anything
+        if (mChatService?.getState() != BluetoothChatService.STATE_CONNECTED) {
+            Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
+            return
+        }
 
-}
+        // Check that there's actually something to send
+        if (message.isNotEmpty()) {
+            // Get the message bytes and tell the BluetoothChatService to write
+            val send = message.toByteArray()
+            mChatService?.write(send)
 
-override fun onStop() {
-    super.onStop()
-    //PopupService()
-}
+            // Reset out string buffer to zero and clear the edit text field
+            //mOutStringBuffer.setLength(0)
+            //mOutEditText.setText(mOutStringBuffer)
+        }
+    }
 
-override fun onRestart() {
-    super.onRestart()
 
-}
+    private fun showChatFragment() {
+
+        if (!isFinishing) {
+            val fragmentManager = supportFragmentManager
+            val fragmentTransaction = fragmentManager.beginTransaction()
+            chatFragment = ChatFragment.newInstance()
+            chatFragment.setCommunicationListener(this)
+            fragmentTransaction.replace(R.id.mainScreen, chatFragment, "ChatFragment")
+            fragmentTransaction.addToBackStack("ChatFragment")
+            fragmentTransaction.commit()
+        }
+    }
+
+    override fun onCommunication(message: String) {
+        sendMessage(message)
+    }
+
+    override fun onBackPressed() {
+        if (supportFragmentManager.backStackEntryCount == 0)
+            super.onBackPressed()
+        else
+            supportFragmentManager.popBackStack()
+    }
+
+    private fun showAlramChat() {
+
+    }
+
+    override fun onStop() {
+        super.onStop()
+        //PopupService()
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+
+    }
 
 }
 

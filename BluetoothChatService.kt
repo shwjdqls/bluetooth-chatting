@@ -18,8 +18,10 @@ import android.os.Handler
 import java.util.*
 import android.os.Binder
 import android.os.IBinder
+import android.support.annotation.MainThread
 import android.support.v4.content.LocalBroadcastManager
 import android.webkit.JavascriptInterface
+import java.security.AccessController.getContext
 
 class BluetoothChatService : Service() {
 
@@ -43,6 +45,7 @@ class BluetoothChatService : Service() {
     private var mInsecureAcceptThread: AcceptThread? = null
     private var mConnectThread: ConnectThread? = null
     private var mConnectedThread: ConnectedThread? = null
+
     private var mState: Int = 0
     private var mNewState: Int = 0
 
@@ -74,9 +77,16 @@ class BluetoothChatService : Service() {
 
     private val localBroadcastManager = LocalBroadcastManager.getInstance(this)
 
-    private var running : Boolean = false
+    private var running: Boolean = false
 
-    fun isAppRunning(context: Context): Boolean{
+    private val LOCAL_KEY = "com.webianks.bluechat.SEND_BROAD_CAST"
+
+    private var stateFilter: IntentFilter? = null
+    private var actOn : Boolean = true
+
+
+    fun isAppRunning(): Boolean {
+
         val activityManager: ActivityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         var infos: List<ActivityManager.RunningTaskInfo> = activityManager.getRunningTasks(1)
         var runningTask: ActivityManager.RunningTaskInfo = infos.get(0)
@@ -103,59 +113,24 @@ class BluetoothChatService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        var intent: Intent = Intent(this, MainActivity::class.java)
+        intent?.putExtra("chatState", mState)
+        LocalBroadcastManager.getInstance(this).sendBroadcast(Intent(intent))
+
+        stateFilter?.addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
+        stateFilter?.addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED)
+        stateFilter?.addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
+        stateFilter?.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
+        stateFilter?.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
+        stateFilter?.addAction(BluetoothDevice.ACTION_FOUND)
+        stateFilter?.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
+        stateFilter?.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+        stateFilter?.addAction(BluetoothDevice.ACTION_PAIRING_REQUEST)
+        registerReceiver(mReceiver, stateFilter);
+
     }
 
-    /* Local broadcast receiver for message data*/
 
-    // data chekck
-    /*private val mmServerSocket: BluetoothServerSocket?
-    private val mSocketType: String
-
-    init {
-        var tmp: BluetoothServerSocket? = null
-        mSocketType = if (mSecure) "Secure" else "Insecure"
-
-        // Create a new listening server socket
-        try {
-            if (mSecure) {
-                tmp = mAdapter?.listenUsingRfcommWithServiceRecord(NAME_SECURE,
-                        MY_UUID_SECURE)
-            } else {
-                tmp = mAdapter?.listenUsingInsecureRfcommWithServiceRecord(
-                        NAME_INSECURE, MY_UUID_INSECURE)
-            }
-        } catch (e: IOException) {
-            Log.e(TAG, "Socket Type: " + mSocketType + "listen() failed", e)
-        }
-
-        mmServerSocket = tmp
-        mState = STATE_LISTEN
-    }*/
-
-
-    /*for chat Service Keep running*/
-    /*inner class ServiceStart : Runnable {
-
-        private var Stopped : Boolean = false
-
-
-
-            val buffer = ByteArray(1024)
-            var bytes: Int
-            while(!Stopped)
-            {
-                if(mState == STATE_CONNECTED)
-                {
-
-                }
-                else
-                {
-                    unregisterReceiver(mReceiver)
-                }
-            }
-        }
-    }*/
-    // Constants that indicate the current connection state
     companion object {
         val STATE_NONE = 0       // we're doing nothing
         val STATE_LISTEN = 1     // now listening for incoming connections
@@ -170,10 +145,10 @@ class BluetoothChatService : Service() {
         mNewState = mState
     }
 
-    fun setHandler(handler: Handler) {
+    /*fun setHandler(handler: Handler) {
         mHandler = handler
     }
-
+*/
     @Synchronized
     fun getState(): Int {
         return mState
@@ -185,6 +160,7 @@ class BluetoothChatService : Service() {
      */
     @Synchronized
     fun start() {
+
         Log.d(TAG, "start")
 
         // Cancel any thread attempting to make a connection
@@ -339,7 +315,6 @@ class BluetoothChatService : Service() {
         writeChat = write(out).toString()
         intent.putExtra("chat", write(out).toString())
     }
-
 
     /**
      * Indicate that the connection attempt failed and notify the UI Activity.
@@ -545,6 +520,7 @@ class BluetoothChatService : Service() {
         }
     }
 
+
     /**
      * This thread runs during a connection with a remote device.
      * It handles all incoming and outgoing transmissions.
@@ -568,11 +544,21 @@ class BluetoothChatService : Service() {
             }
 
             mmInStream = tmpIn
-            serviceInStream = tmpIn
             mmOutStream = tmpOut
-            serviceOutStream = tmpOut
             mState = STATE_CONNECTED
+
+            if(isAppRunning() == false)
+            {
+
+            }
+            else
+            {
+
+            }
+
         }
+
+
 
         override fun run() {
             Log.i(TAG, "BEGIN mConnectedThread")
@@ -581,21 +567,26 @@ class BluetoothChatService : Service() {
 
             // Keep listening to the InputStream while connected
             while (mState == STATE_CONNECTED) {
-                try {
-                    // Read from the InputStream
-
+                if(isAppRunning()== true)
+                {
+                    try {
                         bytes = mmInStream?.read(buffer) ?: 0
 
-                    // Send the obtained bytes to the UI Activity
-                    mHandler?.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer)
-                            ?.sendToTarget()
+                        // Send the obtained bytes to the UI Activity
+                        mHandler?.obtainMessage(Constants.MESSAGE_READ, bytes, -1, buffer)
+                                ?.sendToTarget()
 
-                } catch (e: IOException) {
-                    Log.e(TAG, "disconnected", e)
-                    connectionLost()
-                    break
+                    } catch (e: IOException) {
+                        Log.e(TAG, "disconnected", e)
+                        connectionLost()
+                        break
+                    }
+
                 }
-
+                else
+                {
+                    bytes = mmInStream?.read(buffer)?: 0
+                }
             }
         }
 
