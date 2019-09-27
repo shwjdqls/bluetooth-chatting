@@ -46,7 +46,7 @@ class popup : Service() {
 
     override fun onBind(intent: Intent?) = mBinder
 
-    private lateinit var ContentTV: TextView
+    lateinit var ContentTV: TextView
 
     private val inflate: LayoutInflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
     private var wm: WindowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
