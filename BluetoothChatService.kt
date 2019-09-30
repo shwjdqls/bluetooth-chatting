@@ -64,16 +64,15 @@ class BluetoothChatService : Service() {
 
     private var Broadcast_Message = ""
     private var mReceiver: BroadcastReceiver? = null
+    private var OverlayReceiver : BroadcastReceiver? = null
     private var num = 0;
 
     private var mSecure: Boolean = false
 
     private var writeChat: String = ""
 
-    private val intent = Intent(this, MainActivity::class.java)
-
-    private var serviceInStream: InputStream? = null
-    private var serviceOutStream: OutputStream? = null
+    private var MainIntent = Intent(this, MainActivity::class.java)
+    private var overlayIntent  = Intent(this, popup::class.java)
 
     private val localBroadcastManager = LocalBroadcastManager.getInstance(this)
 
@@ -82,7 +81,11 @@ class BluetoothChatService : Service() {
     private val LOCAL_KEY = "com.webianks.bluechat.SEND_BROAD_CAST"
 
     private var stateFilter: IntentFilter? = null
+
+    private val overlayIntentFilter = IntentFilter("com.webianks.bluechat.SEND_BROAD_CAST")
     private var actOn : Boolean = true
+
+
 
 
     fun isAppRunning(): Boolean {
@@ -102,32 +105,19 @@ class BluetoothChatService : Service() {
         }
         return running
     }
-
-    fun sendLocalBroadcast(intent: Intent) {
-        intent.putExtra("chat", writeChat)
-    }
-
     fun onStartcommand(intent: Intent, flaga: Int, startId: Int): Int {
         return START_STICKY
     }
 
     override fun onCreate() {
         super.onCreate()
-        var intent: Intent = Intent(this, MainActivity::class.java)
-        intent?.putExtra("chatState", mState)
-        LocalBroadcastManager.getInstance(this).sendBroadcast(Intent(intent))
 
-        stateFilter?.addAction(BluetoothAdapter.ACTION_STATE_CHANGED)
-        stateFilter?.addAction(BluetoothAdapter.ACTION_CONNECTION_STATE_CHANGED)
-        stateFilter?.addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
-        stateFilter?.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
-        stateFilter?.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
-        stateFilter?.addAction(BluetoothDevice.ACTION_FOUND)
-        stateFilter?.addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
-        stateFilter?.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-        stateFilter?.addAction(BluetoothDevice.ACTION_PAIRING_REQUEST)
-        registerReceiver(mReceiver, stateFilter);
 
+        LocalBroadcastManager.getInstance(this).sendBroadcast(Intent(MainIntent))
+        registerReceiver(mReceiver, stateFilter)
+
+        LocalBroadcastManager.getInstance((this)).sendBroadcast((Intent(overlayIntent)))
+        registerReceiver(OverlayReceiver,overlayIntentFilter)
     }
 
 
@@ -313,7 +303,6 @@ class BluetoothChatService : Service() {
         // Perform the write unsynchronized
         r?.write(out)
         writeChat = write(out).toString()
-        intent.putExtra("chat", write(out).toString())
     }
 
     /**
@@ -547,15 +536,6 @@ class BluetoothChatService : Service() {
             mmOutStream = tmpOut
             mState = STATE_CONNECTED
 
-            if(isAppRunning() == false)
-            {
-
-            }
-            else
-            {
-
-            }
-
         }
 
 
@@ -564,12 +544,15 @@ class BluetoothChatService : Service() {
             Log.i(TAG, "BEGIN mConnectedThread")
             val buffer = ByteArray(1024)
             var bytes: Int
-
+            var msg : String = mmInStream?.read(buffer).toString()
+            MainIntent.putExtra("msg",msg)
+            overlayIntent.putExtra("msg",msg)
             // Keep listening to the InputStream while connected
             while (mState == STATE_CONNECTED) {
                 if(isAppRunning()== true)
                 {
-                    try {
+                    localBroadcastManager.sendBroadcast(MainIntent)
+                    /*try {
                         bytes = mmInStream?.read(buffer) ?: 0
 
                         // Send the obtained bytes to the UI Activity
@@ -580,12 +563,12 @@ class BluetoothChatService : Service() {
                         Log.e(TAG, "disconnected", e)
                         connectionLost()
                         break
-                    }
+                    }*/
 
                 }
                 else
                 {
-                    bytes = mmInStream?.read(buffer)?: 0
+                   localBroadcastManager.sendBroadcast(overlayIntent)
                 }
             }
         }
@@ -597,11 +580,16 @@ class BluetoothChatService : Service() {
          */
         fun write(buffer: ByteArray) {
             try {
-                mmOutStream?.write(buffer)
 
+                mmOutStream?.write(buffer)
+                var msg : String = mmOutStream?.write(buffer).toString()
+                MainIntent.putExtra("msg", msg)
+                localBroadcastManager.sendBroadcast(MainIntent)
+
+              /*  mmOutStream?.write(buffer)
                 // Share the sent message back to the UI Activity
                 mHandler?.obtainMessage(Constants.MESSAGE_WRITE, -1, -1, buffer)
-                        ?.sendToTarget()
+                        ?.sendToTarget()*/
             } catch (e: IOException) {
                 Log.e(TAG, "Exception during write", e)
             }

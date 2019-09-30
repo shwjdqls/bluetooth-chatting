@@ -86,7 +86,7 @@ class popup : Service() {
             override fun onReceive(context: Context, intent: Intent) {
                 TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
 
-                val ShowMsg = intent.getStringExtra("chat")
+                val ShowMsg = intent.getStringExtra("msg")
                 ContentTV.setText(ShowMsg)
             }
         }, intentFileter)
@@ -108,31 +108,6 @@ class popup : Service() {
         return START_STICKY
     }
 
-/*    private fun checkPermission() {
-        if (alreadyAskedForPermission)
-            return
-        else
-            alreadyAskedForPermission = true
-    }
-
-    fun hasOverlayPermission(): Boolean =
-            if (Build.VERSION.SDK_INT >= 23) Settings.canDrawOverlays(this) else true
-
-    fun requestOverlayPermission() {
-        if (Build.VERSION.SDK_INT >= 23) {
-            val intent = Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
-        }
-    }*/
-
-    /*fun goFragment(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View?
-  {
-      val mView: View  = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
-      initViews(mView)
-      return mView
-  }*/
-
-
    fun show() {
         var handler: Handler = Handler()
         handler.postDelayed(Runnable()
@@ -151,10 +126,6 @@ class popup : Service() {
 
     fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
-        //mview = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
-        //wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        // mview = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
-        // inflate = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val mParams  = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
@@ -168,21 +139,7 @@ class popup : Service() {
 
     private fun initViews(mView: View) {
         ContentTV = mView.findViewById(R.id.tv_content)
-
-/*        OKbt.setOnClickListener(this)
-        Cancelbt.setOnClickListener(this)*/
     }
-
-/*    fun onClick(p0: View?) {
-        val fragmentManager = supportFragmentManager
-        val fragmentTransaction = fragmentManager.beginTransaction()
-        chatFragment = ChatFragment.newInstance()
-        chatFragment.setCommunicationListener(this)
-        fragmentTransaction.replace(R.id.popup, "ChatFragment")
-        fragmentTransaction.addToBackStack("ChatFragment")
-        fragmentTransaction.commit()
-    }*/
-
 
     fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         when (requestCode) {
@@ -195,17 +152,4 @@ class popup : Service() {
                 }
         }
     }
-
-   /* private fun startOverlay() {
-        ImageView(this).run {
-            val windowManager = getSystemService(Service.WINDOW_SERVICE) as WindowManager
-            setImageResource(android.R.drawable.ic_menu_add)
-        }
-    }
-
-    private fun stopOverlay() {
-        if (wm != null) {
-            wm.removeView(mview)
-        }
-    }*/
 }
