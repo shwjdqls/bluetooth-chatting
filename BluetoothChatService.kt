@@ -36,6 +36,7 @@ class BluetoothChatService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         return START_STICKY
+
     }
 
     // Member fields
@@ -86,6 +87,7 @@ class BluetoothChatService : Service() {
     private var actOn : Boolean = true
 
 
+    private lateinit var overlayService : popup
 
 
     fun isAppRunning(): Boolean {
@@ -112,20 +114,24 @@ class BluetoothChatService : Service() {
     override fun onCreate() {
         super.onCreate()
 
-
         LocalBroadcastManager.getInstance(this).sendBroadcast(Intent(MainIntent))
         registerReceiver(mReceiver, stateFilter)
+
 
         LocalBroadcastManager.getInstance((this)).sendBroadcast((Intent(overlayIntent)))
         registerReceiver(OverlayReceiver,overlayIntentFilter)
     }
 
-
-    companion object {
+    fun sendState()
+    {
+        MainIntent.putExtra("chatState",mState.toString())
+        LocalBroadcastManager.getInstance(this).sendBroadcast(MainIntent)
+    }
+        companion object {
         val STATE_NONE = 0       // we're doing nothing
         val STATE_LISTEN = 1     // now listening for incoming connections
         val STATE_CONNECTING = 2 // now initiating an outgoing connection
-        val STATE_CONNECTED = 3  // now connected to a remote device
+        val STATE_CONNECTED = 3
     }
 
     init {
@@ -177,7 +183,6 @@ class BluetoothChatService : Service() {
         // Update UI title
         //updateUserInterfaceTitle()
     }
-
 
     /**
      * Start the ConnectThread to initiate a connection to a remote device.
@@ -317,6 +322,7 @@ class BluetoothChatService : Service() {
         mHandler?.sendMessage(msg)
 
         mState = STATE_NONE
+        sendState()
         // Update UI title
         //updateUserInterfaceTitle()
 
@@ -336,6 +342,7 @@ class BluetoothChatService : Service() {
         mHandler?.sendMessage(msg)
 
         mState = STATE_NONE
+        sendState()
         // Update UI title
         // updateUserInterfaceTitle()
 
@@ -373,6 +380,7 @@ class BluetoothChatService : Service() {
 
             mmServerSocket = tmp
             mState = STATE_LISTEN
+            sendState()
         }
 
         override fun run() {
@@ -389,6 +397,7 @@ class BluetoothChatService : Service() {
                     // This is a blocking call and will only return on a
                     // successful connection or an exception
                     socket = mmServerSocket?.accept()
+                    sendState()
                 } catch (e: IOException) {
                     Log.e(TAG, "Socket Type: " + mSocketType + "accept() failed", e)
                     break
@@ -402,6 +411,7 @@ class BluetoothChatService : Service() {
                                 // Situation normal. Start the connected thread.
                                 connected(socket, socket?.remoteDevice,
                                         mSocketType)
+
                             STATE_NONE, STATE_CONNECTED ->
                                 // Either not ready or already connected. Terminate new socket.
                                 try {
@@ -461,6 +471,7 @@ class BluetoothChatService : Service() {
 
             mmSocket = tmp
             mState = STATE_CONNECTING
+            sendState()
         }
 
         override fun run() {
@@ -535,6 +546,7 @@ class BluetoothChatService : Service() {
             mmInStream = tmpIn
             mmOutStream = tmpOut
             mState = STATE_CONNECTED
+            sendState()
 
         }
 
@@ -551,6 +563,7 @@ class BluetoothChatService : Service() {
             while (mState == STATE_CONNECTED) {
                 if(isAppRunning()== true)
                 {
+                    sendState()
                     localBroadcastManager.sendBroadcast(MainIntent)
                     /*try {
                         bytes = mmInStream?.read(buffer) ?: 0
@@ -568,6 +581,7 @@ class BluetoothChatService : Service() {
                 }
                 else
                 {
+                    sendState()
                    localBroadcastManager.sendBroadcast(overlayIntent)
                 }
             }
@@ -587,7 +601,7 @@ class BluetoothChatService : Service() {
                 localBroadcastManager.sendBroadcast(MainIntent)
 
               /*  mmOutStream?.write(buffer)
-                // Share the sent message back to the UI Activity
+                // Share the sent i back to the UI Activity
                 mHandler?.obtainMessage(Constants.MESSAGE_WRITE, -1, -1, buffer)
                         ?.sendToTarget()*/
             } catch (e: IOException) {

@@ -55,6 +55,9 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     private lateinit var mConnectedDeviceName: String
     private lateinit var chatFragment: ChatFragment
 
+    private var chatservicebind : Boolean = false
+    private var overlaybind : Boolean = false
+
     private var intentFilter = IntentFilter("com.webianks.bluechat.SEND_BROAD_CAST")
 
     private val LOCAL_KEY = "com.webianks.bluechat.SEND_BROAD_CAST"
@@ -63,13 +66,15 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     private var connected: Boolean = false
 
     private var mChatService: BluetoothChatService? = null
-    private var mOverlayService: popup? = null
+    private lateinit var mOverlayService : popup
 
     private val PERMISSION_REQUSET_OVERLAY: Int = 134;
-    private lateinit var overlayService: popup
+
 
     private var mReceive: BroadcastReceiver? = null
     private val REQUEST_OVERLAY_PERMISSION = 1;
+
+    val msg : String? = null
 
     //private var localBroadcastManager = LocalBroadcastManager.getInstance(this)
 
@@ -126,6 +131,21 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         recyclerView.adapter = devicesAdapter
         devicesAdapter.setItemClickListener(this)
 
+        if(chatservicebind != false)
+        {
+            bindService(Intent(this, BluetoothChatService::class.java),serviceConnection,Context.BIND_AUTO_CREATE)
+            chatservicebind = true
+
+        }
+        if(overlaybind != false)
+        {
+            bindService(Intent(this, popup::class.java),serviceConnection,Context.BIND_AUTO_CREATE)
+            overlaybind = true
+        }
+
+        var intentblue =  Intent("bluetoothState")
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intentblue)
+
         // Register for broadcasts when a device is discovered.
         var filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
         registerReceiver(mReceiver, filter)
@@ -137,68 +157,8 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         // Get the local Bluetooth adapter
         mBtAdapter = BluetoothAdapter.getDefaultAdapter()
 
-        val localBroadcastManager = LocalBroadcastManager.getInstance(this)
-        localBroadcastManager.registerReceiver(object : BroadcastReceiver() {
-
-            override fun onReceive(context: Context, intent: Intent) {
-                val mstate: String = "com.webianks.bluechat.SEND_BROAD_CAST"
-
-                val action : String = intent.action
-                val device : BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                var name : String?  = null
-
-                if(device != null)
-                {
-                    name = device.name
-                }
-                val ChatState: String = intent.getStringExtra("chatState")
-                val read: String = Constants.MESSAGE_READ.toString()
-                val write: String = Constants.MESSAGE_WRITE.toString()
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
-                    var overlayIntent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
-                    startActivityForResult(overlayIntent, PERMISSION_REQUSET_OVERLAY)
-                } else {
-                    context.bindService(Intent(context, popup::class.java))
-                }
-
-                if (mstate.equals(intent.action)) {
-                    var chatIntent = Intent(context, BluetoothChatService::class.java)
-                    context.bindService(chatIntent)
-
-                    //var msg : String = intent.getStringExtra("message")
-                } else if (read.equals(ChatState)) {
-
-                    val readMessage = intent.getStringExtra("chat")
-                    val milliSecondsTime = System.currentTimeMillis()
-                    chatFragment.communicate(com.webianks.bluechat.Message(readMessage, milliSecondsTime, Constants.MESSAGE_TYPE_RECEIVED))
-
-                   /* if (mChatService?.isAppRunning(this@MainActivity) == false) {
-                        val readMessage = intent.getStringExtra("chat")
-                        popup.tv_content.setText(readMessage)
-                        overlayService.show()
-                    } else {
-                        overlayService.hide()
-                        val readMessage = intent.getStringExtra("chat")
-                        val milliSecondsTime = System.currentTimeMillis()
-                        chatFragment.communicate(com.webianks.bluechat.Message(readMessage, milliSecondsTime, Constants.MESSAGE_TYPE_RECEIVED))
-                    }*/
-
-                }// broadcast with read
-
-                else if (write.equals(ChatState)) {
-
-                    // construct a string from the buffer
-                    val writeMessage = intent.getStringExtra("chat")
-                    val milliSecondsTime = System.currentTimeMillis()
-                    chatFragment.communicate(com.webianks.bluechat.Message(writeMessage, milliSecondsTime, Constants.MESSAGE_TYPE_SENT))
-
-                } // broadcast with write
-                else {
-                }
-
-            }
-        }, IntentFilter(LOCAL_KEY))
+        mChatService = BluetoothChatService()
+        mOverlayService = popup()
 
         // Initialize the BluetoothChatService to perform bluetooth connections
 //        mChatService = BluetoothChatService(this, mHandler)
@@ -252,21 +212,27 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     val serviceConnection = object : ServiceConnection {
         override fun onServiceDisconnected(p0: ComponentName?) {
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+            overlaybind = false
+            chatservicebind = false
         }
 
         override fun onServiceConnected(p0: ComponentName?, service: IBinder?) {
             val binder = service as BluetoothChatService.LocalBinder
             mChatService = binder.service
             val binderoverlay = service as popup.LocalBinder
-            overlayService = binderoverlay.service
+
+            overlaybind = true
+            chatservicebind = true
+
+
             //mChatService?.setHandler(mHandler)
             TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
         }
     }
 
 
-    private fun makeVisible() {
-
+    private fun makeVisible()
+    {
         val discoverableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
         discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
         startActivity(discoverableIntent)
@@ -469,10 +435,102 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                 mChatService?.start()
             }
         }
+        val mStateReceiver = object : BroadcastReceiver()
+        {
+            override fun onReceive(context : Context , intent : Intent)
+            {
+                val mstate: String = "com.webianks.bluechat.SEND_BROAD_CAST"
 
-        if (connected) {
+                val ChatState = intent.getStringExtra("chatState")
+
+                val action : String = intent.action
+                val device : BluetoothDevice = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                var name : String?  = null
+
+
+                if(device != null)
+                {
+                    name = device.name
+                }
+                val read: String = Constants.MESSAGE_READ.toString()
+                val write: String = Constants.MESSAGE_WRITE.toString()
+
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
+                    var overlayIntent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
+                    startActivityForResult(overlayIntent, PERMISSION_REQUSET_OVERLAY)
+                } else {
+                    context.bindService(Intent(context, popup::class.java))
+                }
+
+                if (mstate.equals(intent.action)&& mstate!= null) {
+                    var chatIntent = Intent(context, BluetoothChatService::class.java)
+                    context.bindService(chatIntent)
+
+                    //var msg : String = intent.getStringExtra("message")
+                } else if (read.equals(ChatState)&& mstate!= null) {
+
+                    val readMessage = intent.getStringExtra("chat")
+                    val milliSecondsTime = System.currentTimeMillis()
+                    chatFragment.communicate(com.webianks.bluechat.Message(readMessage, milliSecondsTime, Constants.MESSAGE_TYPE_RECEIVED))
+
+                    /* if (mChatService?.isAppRunning(this@MainActivity) == false) {
+                         val readMessage = intent.getStringExtra("chat")
+                         popup.tv_content.setText(readMessage)
+                         overlayService.show()
+                     } else {
+                         overlayService.hide()
+                         val readMessage = intent.getStringExtra("chat")
+                         val milliSecondsTime = System.currentTimeMillis()
+                         chatFragment.communicate(com.webianks.bluechat.Message(readMessage, milliSecondsTime, Constants.MESSAGE_TYPE_RECEIVED))
+                     }*/
+
+                }// broadcast with read
+
+                else if (write.equals(ChatState)&& mstate!= null) {
+
+                    // construct a string from the buffer
+                    val writeMessage = intent.getStringExtra("chat")
+                    val milliSecondsTime = System.currentTimeMillis()
+                    chatFragment.communicate(com.webianks.bluechat.Message(writeMessage, milliSecondsTime, Constants.MESSAGE_TYPE_SENT))
+
+                } // broadcast with write
+                if(ChatState.equals("0")&& mstate!= null)// we're doing nothing
+                {
+                    status.text = getString(R.string.not_connected)
+                    connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_red))
+                    connected = false
+                }
+                else if(ChatState.equals("1")&& mstate!= null) // now listening for incoming connections
+                {
+                    status.text = getString(R.string.connecting)
+                    connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connecting))
+                    connected = false
+                }
+                else if(ChatState.equals("2")&& mstate!= null)// now initiating an outgoing connection
+                {
+                    status.text = getString(R.string.connecting)
+                    connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connecting))
+                    connected = false
+                }
+                else if (ChatState.equals("3")&& mstate!= null)// now connected to a remote device
+                {
+                    status.text = getString(R.string.connected_to) + " " + mConnectedDeviceName
+                    connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connected))
+                    Snackbar.make(findViewById(R.id.mainScreen), "Connected to " + mConnectedDeviceName, Snackbar.LENGTH_SHORT).show()
+                    checkDevice = Constants.DEVICE_NAME
+                }
+
+
+            }
 
         }
+
+        if (connected) {
+            showChatFragment()
+        }
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, intentFilter)
     }
 
     override fun onDestroy() {
@@ -484,7 +542,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     /**
      * The Handler that gets information back from the BluetoothChatService
      */
-    private val mHandler = @SuppressLint("HandlerLeak")
+/*    private val mHandler = @SuppressLint("HandlerLeak")
     object : Handler() {
         override fun handleMessage(msg: Message) {
 
@@ -512,15 +570,12 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                         }
 
                         BluetoothChatService.STATE_LISTEN, BluetoothChatService.STATE_NONE -> {
-                            status.text = getString(R.string.not_connected)
-                            connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_red))
-                            Snackbar.make(findViewById(R.id.mainScreen), getString(R.string.not_connected), Snackbar.LENGTH_SHORT).show()
-                            connected = false
+f
                         }
                     }
                 }
 
-                /*Constants.MESSAGE_WRITE -> {
+                *//*Constants.MESSAGE_WRITE -> {
                     val writeBuf = msg.obj as ByteArray
                     // construct a string from the buffer
                     val writeMessage = String(writeBuf)
@@ -541,7 +596,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                 {
                     PopupService()
                 }
-                */
+                *//*
                 Constants.MESSAGE_DEVICE_NAME -> {
                     // save the connected device's name
                     mConnectedDeviceName = msg.data.getString(Constants.DEVICE_NAME)
@@ -563,7 +618,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                 }
             }
         }
-    }
+    }*/
 /*private fun SendMesaage()
 {
 
@@ -626,6 +681,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         }
     }
 
+
     override fun onCommunication(message: String) {
         sendMessage(message)
     }
@@ -643,12 +699,13 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
     override fun onStop() {
         super.onStop()
+        //mOverlayService?.show()
+        Log.e("test","test")
         //PopupService()
     }
 
     override fun onRestart() {
         super.onRestart()
-
     }
 
 }
@@ -659,6 +716,13 @@ fun requestOverlayPermission() {
                 Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:com.webianks.bluechat"))
     }
 }
+/*private val mStateReceiver = object : BroadcastReceiver()
+{
+    override fun onReceive(context : Context , intent : Intent)
+    {
+        val ChatState = intent.getStringExtra("chatState")
+    }
+}*/
 
 
 private fun Context.bindService(serviceIntent: Intent) {
