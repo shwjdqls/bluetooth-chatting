@@ -41,8 +41,6 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     private var mChatService: BluetoothChatService? = null
     private var mOverlayService: OverlayService? = null
 
-    private var mReceive: BroadcastReceiver? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -68,12 +66,6 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         devicesAdapter = DevicesRecyclerViewAdapter(context = this, mDeviceList = mDeviceList)
         recyclerView.adapter = devicesAdapter
         devicesAdapter.setItemClickListener(this)
-
-        // Register for broadcasts when a device is discovered.
-        registerReceiver(mReceiver, IntentFilter(BluetoothDevice.ACTION_FOUND))
-
-        // Register for broadcasts when discovery has finished
-        registerReceiver(mReceiver, IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED))
 
         if (mBtAdapter?.isEnabled == false) {
             status.text = getString(R.string.bluetooth_not_enabled)
@@ -122,6 +114,9 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
         bindService(Intent(this, BluetoothChatService::class.java), bluetoothServiceConnection, Context.BIND_AUTO_CREATE)
         bindService(Intent(this, OverlayService::class.java), overlayServiceConnection, Context.BIND_AUTO_CREATE)
+
+        registerReceiver(mReceiver, IntentFilter(BluetoothDevice.ACTION_FOUND))
+        registerReceiver(mReceiver, IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED))
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mStateReceiver, IntentFilter(BluetoothChatService.INTENT_FILTER_MAIN))
     }
@@ -241,9 +236,9 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                 val device = intent.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
                 mDeviceList.add(DeviceData(device.name, device.address))
 
-//                val setList = HashSet<DeviceData>(mDeviceList)
-//                mDeviceList.clear()
-//                mDeviceList.addAll(setList)
+                val setList = HashSet<DeviceData>(mDeviceList)
+                mDeviceList.clear()
+                mDeviceList.addAll(setList)
 
                 devicesAdapter.notifyDataSetChanged()
             }
@@ -338,7 +333,6 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
     override fun onStop() {
         super.onStop()
-        unregisterReceiver(mReceive)
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mStateReceiver)
     }
 

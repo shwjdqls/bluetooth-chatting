@@ -8,10 +8,12 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.PixelFormat
 import android.os.*
+import android.support.constraint.solver.widgets.ConstraintWidgetContainer
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
 import android.view.*
 import android.widget.*
+import kotlinx.android.synthetic.main.popup.view.*
 
 class OverlayService : Service() {
     inner class LocalBinder : Binder() {
@@ -24,31 +26,11 @@ class OverlayService : Service() {
 
     lateinit var ContentTV: TextView
 
-    private val inflate: LayoutInflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-    private var wm: WindowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    private lateinit var inflate: LayoutInflater
+    private lateinit var wm: WindowManager
     private lateinit var mview: View
-
-    private val intentFileter = IntentFilter("com.webianks.bluechat.SEND_BROAD_CAST")
-    private var chatAdapter: ChatAdapter? = null
-    private val messageList = arrayListOf<com.webianks.bluechat.Message>()
-    private val PERMISSION_REQUSET_OVERLAY: Int = 123;
-    private var alreadyAskedForPermission = false
-
-    private val WINDOW_OUT: Int = 101
-    private val Window_IN: Int = 102
-    private val Msgsave: String = ""
-    private lateinit var chatFragment: ChatFragment
-
-    private var mWindowManager : WindowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+    private lateinit var mWindowManager: WindowManager
     private var mViewAdded = false
-
-    private lateinit var mPackageManager: PackageManager
-
-    companion object {
-        val ACTION_START = "start"
-        val ACTION_STOP = "stop"
-    }
-
 
     override fun onCreate() {
         super.onCreate()
@@ -56,10 +38,19 @@ class OverlayService : Service() {
         LocalBroadcastManager.getInstance(this).registerReceiver(receiver, IntentFilter(BluetoothChatService.INTENT_FILTER_OVERLAY))
         val listener: View.OnClickListener = View.OnClickListener { }
 
-        wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        var wm: WindowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
+        inflate = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        mWindowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+        mview = inflate.inflate(R.layout.popup, null, false)
         mview.setOnClickListener {
 
+            mview.tv_content.visibility = View.INVISIBLE
+            val intent = Intent(this, MainActivity::class.java)
+            intent.action = Intent.ACTION_MAIN
+            intent.addCategory(Intent.CATEGORY_LAUNCHER)
+            startActivity(intent)
         }
 
         // inflate = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
@@ -69,9 +60,7 @@ class OverlayService : Service() {
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                 PixelFormat.TRANSLUCENT)
 
-        wm.addView(mview, mParams)
-        //val mView: View = LayoutInflater.from(this).inflate(R.layout.OverlayService, container, false)
-        //initViews(mView)
+        //wm.addView(mview, mParams)
     }
 
     private val receiver = object : BroadcastReceiver() {
@@ -87,28 +76,28 @@ class OverlayService : Service() {
 
     fun show() {
         Handler().postDelayed({
-            createView(inflate, null, null)
+            createView(null)
         }, 5000)
         wm.removeView(mview)
         mViewAdded = true
-       Log.e("test", "show overlay")
+        Log.e("test", "show overlay")
     }
 
-    fun hide()
-    {
+    fun hide() {
         mWindowManager.removeView(mview)
         mViewAdded = false
     }
 
-    private fun createView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    private fun createView(container: ViewGroup?): View? {
 
-        val mParams  = WindowManager.LayoutParams(
+        val mParams = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                 PixelFormat.TRANSLUCENT)
 
+        val layoutinflater: LayoutInflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val mView: View = layoutinflater.inflate(R.layout.popup, container, false)
         wm.addView(mview, mParams)
-        val mView: View = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
         initViews(mView)
         return mView
     }

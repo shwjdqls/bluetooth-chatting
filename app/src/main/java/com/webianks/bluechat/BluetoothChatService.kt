@@ -59,7 +59,7 @@ class BluetoothChatService : Service() {
 
     private var Broadcast_Message = ""
     private var mReceiver: BroadcastReceiver? = null
-    private var OverlayReceiver : BroadcastReceiver? = null
+    private var OverlayReceiver: BroadcastReceiver? = null
     private var num = 0;
 
     private var mSecure: Boolean = false
@@ -75,10 +75,10 @@ class BluetoothChatService : Service() {
     private var stateFilter: IntentFilter? = null
 
     private val overlayIntentFilter = IntentFilter("SEND_BROAD_CAST")
-    private var actOn : Boolean = true
+    private var actOn: Boolean = true
 
 
-    private lateinit var overlayService : OverlayService
+    private lateinit var overlayService: OverlayService
 
 
     fun isActivityRunning(activity: String): Boolean {
@@ -95,19 +95,16 @@ class BluetoothChatService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-
-        registerReceiver(mReceiver, stateFilter)
-        registerReceiver(OverlayReceiver,overlayIntentFilter)
     }
 
-    fun sendState()
-    {
+    fun sendState() {
         Intent(INTENT_FILTER_MAIN).apply {
             action = ACTION_UPDATE_STATUS
             putExtra(ARG_STATUS, mState)
             localBroadcastManager.sendBroadcast(this)
         }
     }
+
     init {
         mAdapter = BluetoothAdapter.getDefaultAdapter()
         mState = STATE_NONE
@@ -523,7 +520,6 @@ class BluetoothChatService : Service() {
         }
 
 
-
         override fun run() {
             Log.i(TAG, "BEGIN mConnectedThread")
             val buffer = ByteArray(1024)
@@ -568,7 +564,7 @@ class BluetoothChatService : Service() {
         fun write(buffer: ByteArray) {
             try {
                 mmOutStream?.write(buffer)
-                var msg : String = mmOutStream?.write(buffer).toString()
+                var msg: String = mmOutStream?.write(buffer).toString()
 
             } catch (e: IOException) {
                 Log.e(TAG, "Exception during write", e)
