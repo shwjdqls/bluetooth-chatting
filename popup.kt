@@ -116,6 +116,7 @@ class popup : Service() {
         }, 5000)
         wm.removeView(mview)
         mViewAdded = true
+       Log.e("test", "show overlay")
     }
 
     fun hide()

@@ -10,10 +10,6 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
-/**
- * Created by ramankit on 25/7/17.
- */
-
 class ChatAdapter(val chatData: List<Message>, val context: Context) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     val SENT = 0

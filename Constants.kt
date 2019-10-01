@@ -1,9 +1,5 @@
 package com.webianks.bluechat
 
-/**
- * Created by ramankit on 20/7/17.
- */
-
 class Constants{
 
     companion object {
@@ -14,7 +10,6 @@ class Constants{
         val MESSAGE_WRITE = 3
         val MESSAGE_DEVICE_NAME = 4
         val MESSAGE_TOAST = 5
-        val MESSAGE_DOZE = 6
 
         var MESSAGE_TYPE_SENT = 0
         var MESSAGE_TYPE_RECEIVED = 1

@@ -61,7 +61,6 @@ class ChatFragment : Fragment(), View.OnClickListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        var intent : Intent = Intent(this, popup.class)
 
             }
 
@@ -120,7 +119,8 @@ class ChatFragment : Fragment(), View.OnClickListener {
 
         if (chatInput.text.isNotEmpty()){
             communicationListener?.onCommunication(chatInput.text.toString())
-            LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
+//            LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
+
             //intent.putExtra("chatoverlay",chatInput.text.toString())
             chatInput.setText("")
             Log.e("For Overlay Data", "OVERRAY DATA")
