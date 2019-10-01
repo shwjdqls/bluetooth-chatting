@@ -6,11 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-
-/**
- * Created by R Ankit on 18-07-2017.
- */
-
 class DevicesRecyclerViewAdapter(val mDeviceList: List<DeviceData>, val context: Context) :
         RecyclerView.Adapter<DevicesRecyclerViewAdapter.VH>() {
 
