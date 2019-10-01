@@ -1,45 +1,21 @@
 package com.webianks.bluechat
 
-import android.Manifest
-import android.annotation.SuppressLint
-import android.app.Activity
-import android.app.Fragment
-import android.app.ProgressDialog.show
 import android.app.Service
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.PixelFormat
-import android.graphics.Typeface
-import android.net.Uri
 import android.os.*
-import android.os.Message
-import android.provider.Settings
-import android.support.annotation.NonNull
-import android.support.design.widget.Snackbar
-import android.support.v4.app.ActivityCompat
-import android.support.v4.app.ActivityCompat.startActivityForResult
-import android.support.v4.content.ContextCompat
 import android.support.v4.content.LocalBroadcastManager
-import android.support.v7.app.AlertDialog
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
-import android.text.Editable
-import android.text.TextWatcher
 import android.util.Log
 import android.view.*
 import android.widget.*
-import kotlinx.android.synthetic.main.chat_fragment.*
-import java.util.zip.Inflater
 
-class popup : Service() {
+class OverlayService : Service() {
     inner class LocalBinder : Binder() {
-        val service: popup = this@popup
+        val service: OverlayService = this@OverlayService
     }
 
     private val mBinder = LocalBinder()
@@ -77,19 +53,14 @@ class popup : Service() {
     override fun onCreate() {
         super.onCreate()
 
+        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, IntentFilter(BluetoothChatService.INTENT_FILTER_OVERLAY))
         val listener: View.OnClickListener = View.OnClickListener { }
 
         wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
 
-        val localBroadcastManager = LocalBroadcastManager.getInstance(this)
-        localBroadcastManager.registerReceiver(object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        mview.setOnClickListener {
 
-                val ShowMsg = intent.getStringExtra("msg")
-                ContentTV.setText(ShowMsg)
-            }
-        }, intentFileter)
+        }
 
         // inflate = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
@@ -99,20 +70,24 @@ class popup : Service() {
                 PixelFormat.TRANSLUCENT)
 
         wm.addView(mview, mParams)
-        //val mView: View = LayoutInflater.from(this).inflate(R.layout.popup, container, false)
+        //val mView: View = LayoutInflater.from(this).inflate(R.layout.OverlayService, container, false)
         //initViews(mView)
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        super.onStartCommand(intent, flags, startId)
-        return START_STICKY
+    private val receiver = object : BroadcastReceiver() {
+        override fun onReceive(p0: Context?, p1: Intent?) {
+            when (p1?.action) {
+                BluetoothChatService.ACTION_UPDATE_STATUS -> {
+                    ContentTV.text = p1.getStringExtra("msg")
+                    show()
+                }
+            }
+        }
     }
 
-   fun show() {
-        var handler: Handler = Handler()
-        handler.postDelayed(Runnable()
-        {
-            onCreateView(inflate, null, null)
+    fun show() {
+        Handler().postDelayed({
+            createView(inflate, null, null)
         }, 5000)
         wm.removeView(mview)
         mViewAdded = true
@@ -125,7 +100,7 @@ class popup : Service() {
         mViewAdded = false
     }
 
-    fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    private fun createView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
         val mParams  = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
@@ -140,17 +115,5 @@ class popup : Service() {
 
     private fun initViews(mView: View) {
         ContentTV = mView.findViewById(R.id.tv_content)
-    }
-
-    fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        when (requestCode) {
-
-            PERMISSION_REQUSET_OVERLAY ->
-
-                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-
-                } else {
-                }
-        }
     }
 }

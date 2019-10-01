@@ -17,15 +17,11 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <service
-            android:name=".chatService"
-            android:enabled="true"
-            android:exported="true"></service>
-        <service
             android:name=".BluetoothChatService"
             android:enabled="true"
             android:exported="true"></service>
         <service
-            android:name=".popup"
+            android:name=".OverlayService"
             android:permission="android.permission.SYSTEM_ALERT_WINDOW"
             android:enabled="true"
             android:exported="true"></service>

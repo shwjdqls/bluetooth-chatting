@@ -1,13 +1,8 @@
 package com.webianks.bluechat
 
 import android.content.*
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.IBinder
-import android.provider.Settings
 import android.support.v4.app.Fragment
-import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.text.TextWatcher
@@ -17,8 +12,6 @@ import android.view.ViewGroup
 import android.text.Editable
 import android.util.Log
 import android.widget.*
-import kotlinx.android.synthetic.main.popup.*
-import javax.xml.transform.Templates
 
 class ChatFragment : Fragment(), View.OnClickListener {
 
@@ -29,7 +22,7 @@ class ChatFragment : Fragment(), View.OnClickListener {
     private lateinit var recyclerviewChat: RecyclerView
     private val messageList = arrayListOf<Message>()
 
-    private var OverlayService : popup? = null
+    private var overlayService : OverlayService? = null
 
     private var message : String = ""
     private var date : String = ""
