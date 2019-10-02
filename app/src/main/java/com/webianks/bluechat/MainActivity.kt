@@ -29,6 +29,9 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         private const val REQUEST_ENABLE_BT = 123
         private const val PERMISSION_REQUEST_LOCATION = 123
         private const val PERMISSION_REQUEST_OVERLAY = 134
+        private const val ACITION_RESEND_STATE = "status"
+        private const val INTENT_FILTER_BLUETOOTH = "bluetooth"
+        private const val ARG_STATUS = "status"
     }
 
     private val mDeviceList = arrayListOf<DeviceData>()
@@ -180,6 +183,14 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                 }
             }
         }
+    }
+
+    private fun reSendStatus() {
+        Intent(INTENT_FILTER_BLUETOOTH).apply {
+            action = ACITION_RESEND_STATE
+            putExtra(ARG_STATUS,)
+
+                    }
     }
 
     private fun makeVisible() {

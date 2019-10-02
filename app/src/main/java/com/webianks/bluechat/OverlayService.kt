@@ -47,9 +47,9 @@ class OverlayService : Service() {
         mview.setOnClickListener {
 
             mview.tv_content.visibility = View.INVISIBLE
+
             val intent = Intent(this, MainActivity::class.java)
-            intent.action = Intent.ACTION_MAIN
-            intent.addCategory(Intent.CATEGORY_LAUNCHER)
+            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             startActivity(intent)
         }
 
