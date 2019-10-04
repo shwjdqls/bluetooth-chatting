@@ -1,6 +1,7 @@
 package com.webianks.bluechat
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -10,6 +11,7 @@ import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.os.IBinder
 import android.provider.Settings
 import android.support.design.widget.Snackbar
@@ -17,9 +19,14 @@ import android.support.v4.content.LocalBroadcastManager
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
+import android.util.Log
 import android.view.View
 import android.widget.*
+import com.webianks.bluechat.BluetoothChatService.Companion.ACTION_RECEIVE_MESSAGE
+import com.webianks.bluechat.BluetoothChatService.Companion.ACTION_SEND_MESSAGE
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.popup.*
+import kotlinx.android.synthetic.main.popup.view.*
 import kotlin.system.exitProcess
 
 class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickListener,
@@ -29,16 +36,13 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         private const val REQUEST_ENABLE_BT = 123
         private const val PERMISSION_REQUEST_LOCATION = 123
         private const val PERMISSION_REQUEST_OVERLAY = 134
-        private const val ACITION_RESEND_STATE = "status"
-        private const val INTENT_FILTER_BLUETOOTH = "bluetooth"
-        private const val ARG_STATUS = "status"
     }
 
     private val mDeviceList = arrayListOf<DeviceData>()
     private var mBtAdapter: BluetoothAdapter? = null
 
     private lateinit var devicesAdapter: DevicesRecyclerViewAdapter
-    private lateinit var mConnectedDeviceName: String
+    private var mConnectedDeviceName: String = "Another Device"
     private lateinit var chatFragment: ChatFragment
 
     private var mChatService: BluetoothChatService? = null
@@ -56,6 +60,18 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                     .setMessage(getString(R.string.no_support))
                     .setPositiveButton("Exit") { _, _ -> exitProcess(0) }
                     .show()
+        }
+        else
+        {
+            if(mBtAdapter?.isEnabled == false)
+            {
+                val enalbeBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                startActivityForResult(enalbeBtIntent, REQUEST_ENABLE_BT)
+            }
+            else
+            {
+                status.text = "Not connected"
+            }
         }
 
         toolbarTitle.typeface = Typeface.createFromAsset(assets, "fonts/product_sans.ttf")
@@ -95,9 +111,6 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                 headerLabelPaired.visibility = View.VISIBLE
             }
         }
-
-        searchDevices()
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
             var intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName"))
             startActivityForResult(intent, PERMISSION_REQUEST_OVERLAY)
@@ -115,13 +128,19 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     override fun onStart() {
         super.onStart()
 
+        Log.i("test", "onStart")
         bindService(Intent(this, BluetoothChatService::class.java), bluetoothServiceConnection, Context.BIND_AUTO_CREATE)
         bindService(Intent(this, OverlayService::class.java), overlayServiceConnection, Context.BIND_AUTO_CREATE)
 
         registerReceiver(mReceiver, IntentFilter(BluetoothDevice.ACTION_FOUND))
         registerReceiver(mReceiver, IntentFilter(BluetoothAdapter.ACTION_DISCOVERY_FINISHED))
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(mStateReceiver, IntentFilter(BluetoothChatService.INTENT_FILTER_MAIN))
+        val intentfilter = IntentFilter(BluetoothChatService.INTENT_FILTER_MAIN).apply {
+            addAction(BluetoothChatService.ACTION_SEND_MESSAGE)
+            addAction(BluetoothChatService.ACTION_RECEIVE_MESSAGE)
+            addAction(BluetoothChatService.ACTION_UPDATE_STATUS)
+        }
+        LocalBroadcastManager.getInstance(this).registerReceiver(mStateReceiver, intentfilter)
     }
 
     override fun onResume() {
@@ -139,58 +158,68 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         if (isFinishing) {
             return
         }
-        supportFragmentManager.beginTransaction().let {
-            chatFragment = ChatFragment.newInstance().apply {
-                setCommunicationListener(this@MainActivity)
-                it.replace(R.id.mainScreen, this, "ChatFragment")
-                it.addToBackStack("ChatFragment")
-                it.commit()
-            }
-        }
     }
 
     private val mStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
+            Log.i("test", "onReceive")
+            Log.i("test","Receive_action " + intent?.action)
             when (intent?.action) {
-                BluetoothChatService.ACTION_RECEIVE_MESSAGE -> {
-                    val message = intent.getStringExtra(BluetoothChatService.ARG_MESSAGE)
-                    val milliSecondsTime = System.currentTimeMillis()
-                    chatFragment.communicate(Message(message, milliSecondsTime, Constants.MESSAGE_TYPE_RECEIVED))
-                }
                 BluetoothChatService.ACTION_UPDATE_STATUS -> {
-                    when (intent.getIntExtra(BluetoothChatService.ARG_STATUS, -1)) {
+                    when (intent.getIntExtra(BluetoothChatService.ARG_STATUS,-1)) {
                         BluetoothChatService.STATE_NONE -> {
+                            Log.i("test", "State none")
                             status.text = getString(R.string.not_connected)
                             connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_red))
                         }
                         BluetoothChatService.STATE_LISTEN -> {
+                            Log.i("test", "State listen")
                             status.text = getString(R.string.connecting)
                             connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connecting))
                         }
                         BluetoothChatService.STATE_CONNECTING -> {
                             status.text = getString(R.string.connecting)
+                            Log.i("test", "State connecting")
                             connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connecting))
                         }
                         BluetoothChatService.STATE_CONNECTED -> {
+                            Log.i("test", "State connected")
                             status.text = "${getString(R.string.connected_to)} $mConnectedDeviceName"
                             connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connected))
                             Snackbar.make(findViewById(R.id.mainScreen), "Connected to " + mConnectedDeviceName, Snackbar.LENGTH_SHORT).show()
+
+                            supportFragmentManager.beginTransaction().let {
+                                chatFragment = ChatFragment.newInstance().apply {
+                                    setCommunicationListener(this@MainActivity)
+                                    it.replace(R.id.mainScreen, this, "ChatFragment")
+                                    it.addToBackStack("ChatFragment")
+                                    it.commit()
+                                }
+                            }
+
                         }
                         else -> {
+                            Log.i("test", "No state Received")
                             // 예외 처리
                         }
                     }
                 }
+                BluetoothChatService.ACTION_RECEIVE_MESSAGE -> {
+
+                    Log.i("test", "receive message")
+                    val message = intent.getStringExtra(BluetoothChatService.ARG_MESSAGE)
+                    val milliSecondsTime = System.currentTimeMillis()
+                    chatFragment.communicate(Message(message, milliSecondsTime, Constants.MESSAGE_TYPE_RECEIVED))
+                }
+                BluetoothChatService.ACTION_SEND_MESSAGE->{
+
+                    Log.i("test", "send message")
+                    val message = intent.getStringExtra(BluetoothChatService.ARG_MESSAGE)
+                    val milliSecondsTime = System.currentTimeMillis()
+                    chatFragment.communicate(Message(message, milliSecondsTime,Constants.MESSAGE_TYPE_SENT))
+                }
             }
         }
-    }
-
-    private fun reSendStatus() {
-        Intent(INTENT_FILTER_BLUETOOTH).apply {
-            action = ACITION_RESEND_STATE
-            putExtra(ARG_STATUS,)
-
-                    }
     }
 
     private fun makeVisible() {
@@ -344,6 +373,7 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
     override fun onStop() {
         super.onStop()
+        Log.i("test", "onStop")
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mStateReceiver)
     }
 

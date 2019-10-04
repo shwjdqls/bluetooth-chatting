@@ -1,0 +1,14 @@
+diff a/app/src/main/java/com/webianks/bluechat/BluetoothChatService.kt b/app/src/main/java/com/webianks/bluechat/BluetoothChatService.kt	(rejected hunks)
+@@ -75,10 +75,10 @@
+     private var stateFilter: IntentFilter? = null
+ 
+     private val overlayIntentFilter = IntentFilter("SEND_BROAD_CAST")
+-    private var actOn : Boolean = true
++    private var actOn: Boolean = true
+ 
+ 
+-    private lateinit var overlayService : OverlayService
++    private lateinit var overlayService: OverlayService
+ 
+ 
+     fun isActivityRunning(activity: String): Boolean {

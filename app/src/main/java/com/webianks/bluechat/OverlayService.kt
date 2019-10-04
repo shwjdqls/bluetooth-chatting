@@ -24,10 +24,7 @@ class OverlayService : Service() {
 
     override fun onBind(intent: Intent?) = mBinder
 
-    lateinit var ContentTV: TextView
-
     private lateinit var inflate: LayoutInflater
-    private lateinit var wm: WindowManager
     private lateinit var mview: View
     private lateinit var mWindowManager: WindowManager
     private var mViewAdded = false
@@ -35,13 +32,13 @@ class OverlayService : Service() {
     override fun onCreate() {
         super.onCreate()
 
-        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, IntentFilter(BluetoothChatService.INTENT_FILTER_OVERLAY))
+        val intentFilter = IntentFilter(BluetoothChatService.INTENT_FILTER_OVERLAY).apply {
+            addAction(BluetoothChatService.ACTION_RECEIVE_MESSAGE)
+        }
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(receiver, intentFilter)
         val listener: View.OnClickListener = View.OnClickListener { }
-
-        var wm: WindowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-
         inflate = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        wm = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         mWindowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         mview = inflate.inflate(R.layout.popup, null, false)
         mview.setOnClickListener {
@@ -64,11 +61,12 @@ class OverlayService : Service() {
     }
 
     private val receiver = object : BroadcastReceiver() {
-        override fun onReceive(p0: Context?, p1: Intent?) {
-            when (p1?.action) {
-                BluetoothChatService.ACTION_UPDATE_STATUS -> {
-                    ContentTV.text = p1.getStringExtra("msg")
-                    show()
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                BluetoothChatService.ACTION_OVERLAY_RECEIVE_MESSAGE -> {
+                    Log.i("test","Overlay Receive Message")
+                    val message = intent.getStringExtra(BluetoothChatService.ARG_MESSAGE)
+                    mview.tv_content.text = message
                 }
             }
         }
@@ -78,7 +76,7 @@ class OverlayService : Service() {
         Handler().postDelayed({
             createView(null)
         }, 5000)
-        wm.removeView(mview)
+        mWindowManager.removeView(mview)
         mViewAdded = true
         Log.e("test", "show overlay")
     }
@@ -97,12 +95,12 @@ class OverlayService : Service() {
 
         val layoutinflater: LayoutInflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         val mView: View = layoutinflater.inflate(R.layout.popup, container, false)
-        wm.addView(mview, mParams)
+        mWindowManager.addView(mview, mParams)
         initViews(mView)
         return mView
     }
 
     private fun initViews(mView: View) {
-        ContentTV = mView.findViewById(R.id.tv_content)
+//        ContentTV = mView.findViewById(R.id.tv_content)
     }
 }

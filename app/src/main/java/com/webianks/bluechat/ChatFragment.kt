@@ -22,24 +22,6 @@ class ChatFragment : Fragment(), View.OnClickListener {
     private lateinit var recyclerviewChat: RecyclerView
     private val messageList = arrayListOf<Message>()
 
-    private var overlayService : OverlayService? = null
-
-    private var message : String = ""
-    private var date : String = ""
-    private var time : String = ""
-    private var intent : Intent? = null
-
-    private val mReceiver = object : BroadcastReceiver()
-    {
-        override fun onReceive(Context: Context, intent : Intent) {
-
-            message = intent.getStringExtra("messasge").toString()
-            date = intent.getStringExtra("date").toString()
-            time = intent.getStringExtra("time").toString()
-
-            TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
-        }
-    }
 
 
     companion object {
@@ -52,26 +34,13 @@ class ChatFragment : Fragment(), View.OnClickListener {
     }
 
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-            }
-
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
-        val mView: View  = LayoutInflater.from(activity).inflate(R.layout.chat_fragment, container, false)
+        val mView: View = LayoutInflater.from(activity).inflate(R.layout.chat_fragment, container, false)
         initViews(mView)
         return mView
 
     }
-
-    override fun onStart() {
-        super.onStart()
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-            }
 
     private fun initViews(mView: View) {
 
@@ -94,7 +63,7 @@ class ChatFragment : Fragment(), View.OnClickListener {
                 if (s.isNotEmpty()) {
                     sendButton.isClickable = true
                     sendButton.isEnabled = true
-                }else {
+                } else {
                     sendButton.isClickable = false
                     sendButton.isEnabled = false
                 }
@@ -103,35 +72,33 @@ class ChatFragment : Fragment(), View.OnClickListener {
 
         sendButton.setOnClickListener(this)
 
-        chatAdapter = ChatAdapter(messageList.reversed(),activity)
+        chatAdapter = ChatAdapter(messageList.reversed(), activity)
         recyclerviewChat.adapter = chatAdapter
 
     }
 
     override fun onClick(p0: View?) {
 
-        if (chatInput.text.isNotEmpty()){
+        if (chatInput.text.isNotEmpty()) {
             communicationListener?.onCommunication(chatInput.text.toString())
-//            LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
 
-            //intent.putExtra("chatoverlay",chatInput.text.toString())
             chatInput.setText("")
             Log.e("For Overlay Data", "OVERRAY DATA")
         }
     }
 
 
-    fun setCommunicationListener(communicationListener: CommunicationListener){
-       this.communicationListener = communicationListener
-   }
+    fun setCommunicationListener(communicationListener: CommunicationListener) {
+        this.communicationListener = communicationListener
+    }
 
-    interface CommunicationListener{
+    interface CommunicationListener {
         fun onCommunication(message: String)
     }
 
-    fun communicate(message: Message){
+    fun communicate(message: Message) {
         messageList.add(message)
-        if(activity != null) {
+        if (activity != null) {
             chatAdapter = ChatAdapter(messageList.reversed(), activity)
             recyclerviewChat.adapter = chatAdapter
             recyclerviewChat.scrollToPosition(0)
