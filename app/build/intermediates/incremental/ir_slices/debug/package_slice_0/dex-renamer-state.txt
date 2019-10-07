@@ -1,0 +1,4 @@
+#Fri Oct 04 12:10:05 GMT+09:00 2019
+base.0=D\:\\goyo\\app\\build\\intermediates\\transforms\\dexMerger\\debug\\0
+path.0=classes.dex
+renamed.0=classes.dex
