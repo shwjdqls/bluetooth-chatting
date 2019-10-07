@@ -48,6 +48,8 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     private var mChatService: BluetoothChatService? = null
     private var mOverlayService: OverlayService? = null
 
+    var IsAcitivityOnstop : Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -128,7 +130,10 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
     override fun onStart() {
         super.onStart()
 
-        Log.i("test", "onStart")
+
+        IsAcitivityOnstop = false
+        Log.i("test", IsAcitivityOnstop.toString())
+
         bindService(Intent(this, BluetoothChatService::class.java), bluetoothServiceConnection, Context.BIND_AUTO_CREATE)
         bindService(Intent(this, OverlayService::class.java), overlayServiceConnection, Context.BIND_AUTO_CREATE)
 
@@ -207,14 +212,14 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                 BluetoothChatService.ACTION_RECEIVE_MESSAGE -> {
 
                     Log.i("test", "receive message")
-                    val message = intent.getStringExtra(BluetoothChatService.ARG_MESSAGE)
+                    val message = intent.getStringExtra(BluetoothChatService.ARG_RECEIVE_MESSAGE)
                     val milliSecondsTime = System.currentTimeMillis()
                     chatFragment.communicate(Message(message, milliSecondsTime, Constants.MESSAGE_TYPE_RECEIVED))
                 }
                 BluetoothChatService.ACTION_SEND_MESSAGE->{
 
                     Log.i("test", "send message")
-                    val message = intent.getStringExtra(BluetoothChatService.ARG_MESSAGE)
+                    val message = intent.getStringExtra(BluetoothChatService.ARG_WRITE_MESSAGE)
                     val milliSecondsTime = System.currentTimeMillis()
                     chatFragment.communicate(Message(message, milliSecondsTime,Constants.MESSAGE_TYPE_SENT))
                 }
@@ -373,7 +378,8 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
     override fun onStop() {
         super.onStop()
-        Log.i("test", "onStop")
+        IsAcitivityOnstop = true
+        Log.i("test", IsAcitivityOnstop.toString())
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mStateReceiver)
     }
 

@@ -24,59 +24,67 @@ class OverlayService : Service() {
 
     override fun onBind(intent: Intent?) = mBinder
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+        return START_STICKY
+
+    }
+
     private lateinit var inflate: LayoutInflater
     private lateinit var mview: View
     private lateinit var mWindowManager: WindowManager
     private var mViewAdded = false
+    private var mParams: WindowManager.LayoutParams? = null
 
     override fun onCreate() {
         super.onCreate()
 
+        Log.i("test", "Overlayservice Start")
         val intentFilter = IntentFilter(BluetoothChatService.INTENT_FILTER_OVERLAY).apply {
-            addAction(BluetoothChatService.ACTION_RECEIVE_MESSAGE)
+            addAction(BluetoothChatService.ACTION_OVERLAY_RECEIVE_MESSAGE)
         }
-
         LocalBroadcastManager.getInstance(this).registerReceiver(receiver, intentFilter)
-        val listener: View.OnClickListener = View.OnClickListener { }
+
         inflate = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
         mWindowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        mview = inflate.inflate(R.layout.popup, null, false)
+        mview = inflate.inflate(R.layout.popup, null)
         mview.setOnClickListener {
-
-            mview.tv_content.visibility = View.INVISIBLE
-
+            mview.tv_content.visibility = View.VISIBLE
             val intent = Intent(this, MainActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            //intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+            //intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            hide()
             startActivity(intent)
         }
 
-        // inflate = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-
-        val mParams: WindowManager.LayoutParams = WindowManager.LayoutParams(
+        mParams = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                 PixelFormat.TRANSLUCENT)
-
-        //wm.addView(mview, mParams)
     }
+
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
                 BluetoothChatService.ACTION_OVERLAY_RECEIVE_MESSAGE -> {
-                    Log.i("test","Overlay Receive Message")
-                    val message = intent.getStringExtra(BluetoothChatService.ARG_MESSAGE)
+                    Log.i("test", "Overlay Receive Message")
+                    val message = intent.getStringExtra(BluetoothChatService.ARG_RECEIVE_MESSAGE)
                     mview.tv_content.text = message
+                    show()
                 }
             }
         }
     }
 
     fun show() {
+        mWindowManager.addView(mview, mParams)
         Handler().postDelayed({
-            createView(null)
+            mWindowManager.removeView(mview)
         }, 5000)
-        mWindowManager.removeView(mview)
         mViewAdded = true
         Log.e("test", "show overlay")
     }
@@ -84,23 +92,5 @@ class OverlayService : Service() {
     fun hide() {
         mWindowManager.removeView(mview)
         mViewAdded = false
-    }
-
-    private fun createView(container: ViewGroup?): View? {
-
-        val mParams = WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
-                PixelFormat.TRANSLUCENT)
-
-        val layoutinflater: LayoutInflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        val mView: View = layoutinflater.inflate(R.layout.popup, container, false)
-        mWindowManager.addView(mview, mParams)
-        initViews(mView)
-        return mView
-    }
-
-    private fun initViews(mView: View) {
-//        ContentTV = mView.findViewById(R.id.tv_content)
     }
 }
