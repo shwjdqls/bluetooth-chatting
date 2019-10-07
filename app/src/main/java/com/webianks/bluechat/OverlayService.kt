@@ -1,5 +1,6 @@
 package com.webianks.bluechat
 
+import android.annotation.SuppressLint
 import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -8,6 +9,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.PixelFormat
 import android.os.*
+import android.os.Message
 import android.support.constraint.solver.widgets.ConstraintWidgetContainer
 import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
@@ -35,6 +37,7 @@ class OverlayService : Service() {
     private lateinit var mWindowManager: WindowManager
     private var mViewAdded = false
     private var mParams: WindowManager.LayoutParams? = null
+    private val mHandler = Handler()
 
     override fun onCreate() {
         super.onCreate()
@@ -56,6 +59,7 @@ class OverlayService : Service() {
             //intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
             hide()
             startActivity(intent)
+            mHandler.removeMessages(0)
         }
 
         mParams = WindowManager.LayoutParams(
@@ -64,8 +68,8 @@ class OverlayService : Service() {
                 WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
                 WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
                 PixelFormat.TRANSLUCENT)
-    }
 
+    }
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -80,17 +84,19 @@ class OverlayService : Service() {
         }
     }
 
-    fun show() {
-        mWindowManager.addView(mview, mParams)
-        Handler().postDelayed({
-            mWindowManager.removeView(mview)
-        }, 5000)
-        mViewAdded = true
-        Log.e("test", "show overlay")
-    }
+fun show() {
+    mWindowManager.addView(mview, mParams)
 
-    fun hide() {
+    mHandler.postDelayed({
         mWindowManager.removeView(mview)
-        mViewAdded = false
-    }
+    }, 5000)
+    mViewAdded = true
+    Log.e("test", "show overlay")
+}
+
+fun hide() {
+    mWindowManager.removeView(mview)
+    mViewAdded = false
+}
+
 }
