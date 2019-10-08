@@ -28,17 +28,13 @@ class BluetoothChatService : Service() {
     inner class LocalBinder : Binder() {
         val service: BluetoothChatService = this@BluetoothChatService
     }
-
     private val mBinder = LocalBinder()
-
     override fun onBind(intent: Intent?) = mBinder
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         return START_STICKY
-
     }
-
     // Member fields
     private var mAdapter: BluetoothAdapter? = null
     private var mHandler: Handler? = null
@@ -46,21 +42,15 @@ class BluetoothChatService : Service() {
     private var mInsecureAcceptThread: AcceptThread? = null
     private var mConnectThread: ConnectThread? = null
     private var mConnectedThread: ConnectedThread? = null
-
     private var mState: Int = 0
     private var mNewState: Int = 0
-
     private val TAG: String = javaClass.simpleName
-
     // Unique UUID for this application
     private val MY_UUID_SECURE = UUID.fromString("29621b37-e817-485a-a258-52da5261421a")
     private val MY_UUID_INSECURE = UUID.fromString("d620cd2b-e0a4-435b-b02e-40324d57195b")
-
-
     // Name for the SDP record when creating server socket
     private val NAME_SECURE = "BluetoothChatSecure"
     private val NAME_INSECURE = "BluetoothChatInsecure"
-
     private val localBroadcastManager = LocalBroadcastManager.getInstance(this)
 
     fun isActivityRunning(activity: String): Boolean {
@@ -70,69 +60,42 @@ class BluetoothChatService : Service() {
         val componentName: ComponentName = runningTask.topActivity
 
         return activity.equals(componentName.className)
-/*        for (i in 1..infos.size step 1) {
-            return activity.equals(componentName.className)
-        }
-        return false*/
-
     }
-
     fun sendState() {
-        Log.i("test", "sendstate_blueservice + " + mState.toString())
-
         val intent = Intent(INTENT_FILTER_MAIN)
-        intent.action = ACTION_UPDATE_STATUS
-        intent.putExtra(ARG_STATUS, mState)
-        localBroadcastManager.sendBroadcast(intent)
-
-        /*Intent(INTENT_FILTER_MAIN).apply {
+        intent.apply {
             action = ACTION_UPDATE_STATUS
             putExtra(ARG_STATUS, mState)
-            Log.i("test", mState.toString())
             localBroadcastManager.sendBroadcast(this)
-        }*/
+        }
     }
-
     init {
         mAdapter = BluetoothAdapter.getDefaultAdapter()
         mState = STATE_NONE
-        sendState()
         mNewState = mState
+        sendState()
     }
-
-    /*fun setHandler(handler: Handler) {
-        mHandler = handler
-    }
-*/
-
     @Synchronized
     fun getState(): Int {
         return mState
     }
-
     override fun onCreate() {
         super.onCreate()
         mState = STATE_NONE
         sendState()
-        Log.i("test", "sendStateStart")
     }
-
     @Synchronized
     fun start() {
-        Log.d(TAG, "start")
-
         // Cancel any thread attempting to make a connection
         if (mConnectThread != null) {
             mConnectThread?.cancel()
             mConnectThread = null
         }
-
         // Cancel any thread currently running a connection
         if (mConnectedThread != null) {
             mConnectedThread?.cancel()
             mConnectedThread = null
         }
-
         // Start the thread to listen on a BluetoothServerSocket
         if (mSecureAcceptThread == null) {
             mSecureAcceptThread = AcceptThread(true)
@@ -146,7 +109,6 @@ class BluetoothChatService : Service() {
         //updateUserInterfaceTitle()
     }
 
-
     /**
      * Start the ConnectThread to initiate a connection to a remote device.
 
@@ -154,10 +116,9 @@ class BluetoothChatService : Service() {
      * *
      * @param secure Socket Security type - Secure (true) , Insecure (false)
      */
+
     @Synchronized
     fun connect(device: BluetoothDevice?, secure: Boolean) {
-
-        Log.d(TAG, "connect to: " + device)
 
         // Cancel any thread attempting to make a connection
         if (mState == STATE_CONNECTING) {
@@ -166,13 +127,11 @@ class BluetoothChatService : Service() {
                 mConnectThread = null
             }
         }
-
         // Cancel any thread currently running a connection
         if (mConnectedThread != null) {
             mConnectedThread?.cancel()
             mConnectedThread = null
         }
-
         // Start the thread to connect with the given device
         mConnectThread = ConnectThread(device, secure)
         mConnectThread?.start()
@@ -180,8 +139,6 @@ class BluetoothChatService : Service() {
         // Update UI title
         //updateUserInterfaceTitle()
     }
-
-
     /**
      * Start the ConnectedThread to begin managing a Bluetooth connection
 
@@ -191,20 +148,16 @@ class BluetoothChatService : Service() {
      */
     @Synchronized
     fun connected(socket: BluetoothSocket?, device: BluetoothDevice?, socketType: String) {
-        Log.d(TAG, "connected, Socket Type:" + socketType)
-
         // Cancel the thread that completed the connection
         if (mConnectThread != null) {
             mConnectThread?.cancel()
             mConnectThread = null
         }
-
         // Cancel any thread currently running a connection
         if (mConnectedThread != null) {
             mConnectedThread?.cancel()
             mConnectedThread = null
         }
-
         // Cancel the accept thread because we only want to connect to one device
         if (mSecureAcceptThread != null) {
             mSecureAcceptThread?.cancel()
@@ -214,7 +167,6 @@ class BluetoothChatService : Service() {
             mInsecureAcceptThread?.cancel()
             mInsecureAcceptThread = null
         }
-
         // Start the thread to manage the connection and perform transmissions
         mConnectedThread = ConnectedThread(socket, socketType)
         mConnectedThread?.start()
@@ -227,27 +179,22 @@ class BluetoothChatService : Service() {
     @Synchronized
     fun stop() {
         Log.d(TAG, "stop")
-
         if (mConnectThread != null) {
             mConnectThread?.cancel()
             mConnectThread = null
         }
-
         if (mConnectedThread != null) {
             mConnectedThread?.cancel()
             mConnectedThread = null
         }
-
         if (mSecureAcceptThread != null) {
             mSecureAcceptThread?.cancel()
             mSecureAcceptThread = null
         }
-
         if (mInsecureAcceptThread != null) {
             mInsecureAcceptThread?.cancel()
             mInsecureAcceptThread = null
         }
-
         mState = STATE_NONE
         sendState()
         // Update UI title
@@ -287,10 +234,8 @@ class BluetoothChatService : Service() {
 
         mState = STATE_NONE
         sendState()
-
         // Update UI title
         //updateUserInterfaceTitle()
-
         // Start the service over to restart listening mode
         this@BluetoothChatService.start()
     }
@@ -351,12 +296,7 @@ class BluetoothChatService : Service() {
 
         override fun run() {
 
-            Log.d(TAG, "Socket Type: " + mSocketType +
-                    "BEGIN mAcceptThread" + this)
-            name = "AcceptThread" + mSocketType
-
             var socket: BluetoothSocket?
-
             // Listen to the server socket if we're not connected
             while (mState != STATE_CONNECTED) {
                 try {
@@ -367,7 +307,6 @@ class BluetoothChatService : Service() {
                     Log.e(TAG, "Socket Type: " + mSocketType + "accept() failed", e)
                     break
                 }
-
                 // If a connection was accepted
                 if (socket != null) {
                     synchronized(this@BluetoothChatService) {
@@ -390,13 +329,10 @@ class BluetoothChatService : Service() {
                     }
                 }
             }
-            Log.i(TAG, "END mAcceptThread, socket Type: " + mSocketType)
-
         }
 
         fun cancel() {
-            Log.d(TAG, "Socket Type" + mSocketType + "cancel " + this)
-            try {
+             try {
                 mmServerSocket?.close()
             } catch (e: IOException) {
                 Log.e(TAG, "Socket Type" + mSocketType + "close() of server failed", e)
@@ -418,7 +354,6 @@ class BluetoothChatService : Service() {
         init {
             var tmp: BluetoothSocket? = null
             mSocketType = if (secure) "Secure" else "Insecure"
-
             // Get a BluetoothSocket for a connection with the
             // given BluetoothDevice
             try {
@@ -432,7 +367,6 @@ class BluetoothChatService : Service() {
             } catch (e: IOException) {
                 Log.e(TAG, "Socket Type: " + mSocketType + "create() failed", e)
             }
-
             mmSocket = tmp
             mState = STATE_CONNECTING
             sendState()
@@ -442,16 +376,13 @@ class BluetoothChatService : Service() {
 
             Log.i(TAG, "BEGIN mConnectThread SocketType:" + mSocketType)
             name = "ConnectThread" + mSocketType
-
             // Always cancel discovery because it will slow down a connection
             mAdapter?.cancelDiscovery()
-
             // Make a connection to the BluetoothSocket
             try {
                 // This is a blocking call and will only return on a
                 // successful connection or an exception
                 mmSocket?.connect()
-
             } catch (e: IOException) {
                 // Close the socket
                 try {
@@ -460,20 +391,16 @@ class BluetoothChatService : Service() {
                     Log.e(TAG, "unable to close() " + mSocketType +
                             " socket during connection failure", e2)
                 }
-
                 connectionFailed()
                 return
             }
-
             // Reset the ConnectThread because we're done
             synchronized(this@BluetoothChatService) {
                 mConnectThread = null
             }
-
             // Start the connected thread
             connected(mmSocket, mmDevice, mSocketType)
         }
-
         fun cancel() {
             try {
                 mmSocket?.close()
@@ -494,7 +421,6 @@ class BluetoothChatService : Service() {
         private val mmOutStream: OutputStream?
 
         init {
-            Log.d(TAG, "create ConnectedThread: " + socketType)
             var tmpIn: InputStream? = null
             var tmpOut: OutputStream? = null
 
@@ -514,7 +440,6 @@ class BluetoothChatService : Service() {
         }
 
         override fun run() {
-            Log.i(TAG, "BEGIN mConnectedThread")
             val buffer = ByteArray(1024)
             var bytes: Int
             // Keep listening to the InputStream while connected
@@ -522,7 +447,6 @@ class BluetoothChatService : Service() {
                 try {
                     bytes = mmInStream?.read(buffer) ?: 0
                     // Read from the InputStream
-                    Log.i("testbuffer", buffer.toString())
                     var message: String = String(buffer, 0, bytes)
                     read(message)
 
@@ -537,36 +461,22 @@ class BluetoothChatService : Service() {
         }
 
         fun read(data: String) {
-            Log.i("test", "read")
-/*            Intent(INTENT_FILTER_MAIN).apply {
-                action = ACTION_RECEIVE_MESSAGE
-                putExtra(ARG_MESSAGE, data)
-                localBroadcastManager.sendBroadcast(this)
-                Log.i("test", "sendMessageMain" + data)
-            }*/
             if (isActivityRunning(MainActivity::class.java.name)) {
-
                 Intent(INTENT_FILTER_MAIN).apply {
                     action = ACTION_RECEIVE_MESSAGE
                     putExtra(ARG_RECEIVE_MESSAGE, data)
                     localBroadcastManager.sendBroadcast(this)
-                    Log.i("test", "sendMessageMain" + data)
                 }
-
             } else {
-
                 Intent(INTENT_FILTER_OVERLAY).apply {
                     action = ACTION_OVERLAY_RECEIVE_MESSAGE
                     putExtra(ARG_RECEIVE_MESSAGE, data)
                     localBroadcastManager.sendBroadcast(this)
-                    Log.i("test", "sendMessageOverlay" + data)
                 }
             }
         }
-
         /**
          * Write to the connected OutStream.
-
          * @param buffer The bytes to write
          */
         fun write(buffer: ByteArray) {
@@ -576,7 +486,6 @@ class BluetoothChatService : Service() {
                     action = ACTION_SEND_MESSAGE
                     putExtra(ARG_WRITE_MESSAGE, buffer.toString(Charsets.UTF_8))
                     localBroadcastManager.sendBroadcast(this)
-                    Log.i("test", "WriteMessage " + buffer.toString(Charsets.UTF_8))
                 }
             } catch (e: IOException) {
                 Log.e(TAG, "Exception during write", e)
@@ -593,7 +502,6 @@ class BluetoothChatService : Service() {
 
         }
     }
-
     companion object {
         const val STATE_NONE = 0       // we're doing nothing
         const val STATE_LISTEN = 1     // now listening for incoming connections

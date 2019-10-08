@@ -1,7 +1,6 @@
 package com.webianks.bluechat
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
@@ -11,7 +10,6 @@ import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
 import android.os.IBinder
 import android.provider.Settings
 import android.support.design.widget.Snackbar
@@ -22,37 +20,38 @@ import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.view.View
 import android.widget.*
-import com.webianks.bluechat.BluetoothChatService.Companion.ACTION_RECEIVE_MESSAGE
-import com.webianks.bluechat.BluetoothChatService.Companion.ACTION_SEND_MESSAGE
 import kotlinx.android.synthetic.main.activity_main.*
-import kotlinx.android.synthetic.main.popup.*
-import kotlinx.android.synthetic.main.popup.view.*
 import kotlin.system.exitProcess
 
 class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickListener,
         ChatFragment.CommunicationListener {
 
-    companion object {
-        private const val REQUEST_ENABLE_BT = 123
-        private const val PERMISSION_REQUEST_LOCATION = 123
-        private const val PERMISSION_REQUEST_OVERLAY = 134
-    }
-
-    private val mDeviceList = arrayListOf<DeviceData>()
-    private var mBtAdapter: BluetoothAdapter? = null
-
     private lateinit var devicesAdapter: DevicesRecyclerViewAdapter
-    private var mConnectedDeviceName: String = "Another Device"
     private lateinit var chatFragment: ChatFragment
-
+    private var mBtAdapter: BluetoothAdapter? = null
+    private var mConnectedDeviceName: String = "Another Device"
     private var mChatService: BluetoothChatService? = null
     private var mOverlayService: OverlayService? = null
-
-    var IsAcitivityOnstop : Boolean = false
+    private val mDeviceList = arrayListOf<DeviceData>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        toolbarTitle.typeface = Typeface.createFromAsset(assets, "fonts/product_sans.ttf")
+
+        devicesAdapter = DevicesRecyclerViewAdapter(context = this, mDeviceList = mDeviceList)
+        devicesAdapter.setItemClickListener(this)
+
+        recyclerView.apply {
+            layoutManager =LinearLayoutManager(this@MainActivity)
+            isNestedScrollingEnabled = false
+            adapter = devicesAdapter
+        }
+        recyclerViewPaired.apply{
+            isNestedScrollingEnabled = false
+            layoutManager = LinearLayoutManager(this@MainActivity)
+        }
 
         // Get the local Bluetooth adapter
         mBtAdapter = BluetoothAdapter.getDefaultAdapter()
@@ -62,54 +61,27 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                     .setMessage(getString(R.string.no_support))
                     .setPositiveButton("Exit") { _, _ -> exitProcess(0) }
                     .show()
-        }
-        else
-        {
-            if(mBtAdapter?.isEnabled == false)
-            {
-                val enalbeBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                startActivityForResult(enalbeBtIntent, REQUEST_ENABLE_BT)
-            }
-            else
-            {
+        } else {
+            if (mBtAdapter?.isEnabled == false) {
+                startActivityForResult(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), REQUEST_ENABLE_BT)
+                status.text = getString(R.string.bluetooth_not_enabled)
+
+            } else {
                 status.text = "Not connected"
             }
         }
-
-        toolbarTitle.typeface = Typeface.createFromAsset(assets, "fonts/product_sans.ttf")
-
-        recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerViewPaired.layoutManager = LinearLayoutManager(this)
-
-        recyclerView.isNestedScrollingEnabled = false
-        recyclerViewPaired.isNestedScrollingEnabled = false
-
-        devicesAdapter = DevicesRecyclerViewAdapter(context = this, mDeviceList = mDeviceList)
-        recyclerView.adapter = devicesAdapter
-        devicesAdapter.setItemClickListener(this)
-
-        if (mBtAdapter?.isEnabled == false) {
-            status.text = getString(R.string.bluetooth_not_enabled)
-            startActivityForResult(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE), REQUEST_ENABLE_BT)
-        } else {
-            status.text = getString(R.string.not_connected)
-        }
-
         mBtAdapter?.bondedDevices?.let {
             val mPairedDeviceList = arrayListOf<DeviceData>()
-
             // If there are paired devices, add each one to the ArrayAdapter
             if (it.size > 0) {
                 // There are paired devices. Get the name and address of each paired device.
                 for (device in it) {
                     mPairedDeviceList.add(DeviceData(device.name, device.address))
                 }
-
                 DevicesRecyclerViewAdapter(context = this, mDeviceList = mPairedDeviceList).apply {
                     recyclerViewPaired.adapter = this
                     setItemClickListener(this@MainActivity)
                 }
-
                 headerLabelPaired.visibility = View.VISIBLE
             }
         }
@@ -127,12 +99,34 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         }
     }
 
-    override fun onStart() {
-        super.onStart()
+    private fun makeVisible() {
+        val discoverableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
+        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
+        startActivity(discoverableIntent)
+    }
 
-
-        IsAcitivityOnstop = false
-        Log.i("test", IsAcitivityOnstop.toString())
+    private fun searchDevices() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            // Android M Permission check 
+            if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !=
+                    PackageManager.PERMISSION_GRANTED) {
+                AlertDialog.Builder(this)
+                        .setTitle(getString(R.string.need_loc_access))
+                        .setMessage(getString(R.string.please_grant_loc_access))
+                        .setPositiveButton(android.R.string.ok, null)
+                        .setOnDismissListener {
+                            // the dialog will be opened so we have to save that
+                            requestPermissions(arrayOf(
+                                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                                    Manifest.permission.ACCESS_FINE_LOCATION
+                            ), PERMISSION_REQUEST_LOCATION)
+                        }.show()
+            } else {
+                startDiscovery()
+            }
+        } else {
+            startDiscovery()
+        }
 
         bindService(Intent(this, BluetoothChatService::class.java), bluetoothServiceConnection, Context.BIND_AUTO_CREATE)
         bindService(Intent(this, OverlayService::class.java), overlayServiceConnection, Context.BIND_AUTO_CREATE)
@@ -167,28 +161,22 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
     private val mStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
-            Log.i("test", "onReceive")
-            Log.i("test","Receive_action " + intent?.action)
             when (intent?.action) {
                 BluetoothChatService.ACTION_UPDATE_STATUS -> {
-                    when (intent.getIntExtra(BluetoothChatService.ARG_STATUS,-1)) {
+                    when (intent.getIntExtra(BluetoothChatService.ARG_STATUS, -1)) {
                         BluetoothChatService.STATE_NONE -> {
-                            Log.i("test", "State none")
                             status.text = getString(R.string.not_connected)
                             connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_red))
                         }
                         BluetoothChatService.STATE_LISTEN -> {
-                            Log.i("test", "State listen")
                             status.text = getString(R.string.connecting)
                             connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connecting))
                         }
                         BluetoothChatService.STATE_CONNECTING -> {
                             status.text = getString(R.string.connecting)
-                            Log.i("test", "State connecting")
                             connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connecting))
                         }
                         BluetoothChatService.STATE_CONNECTED -> {
-                            Log.i("test", "State connected")
                             status.text = "${getString(R.string.connected_to)} $mConnectedDeviceName"
                             connectionDot.setImageDrawable(getDrawable(R.drawable.ic_circle_connected))
                             Snackbar.make(findViewById(R.id.mainScreen), "Connected to " + mConnectedDeviceName, Snackbar.LENGTH_SHORT).show()
@@ -204,57 +192,23 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
                         }
                         else -> {
-                            Log.i("test", "No state Received")
                             // 예외 처리
                         }
                     }
                 }
                 BluetoothChatService.ACTION_RECEIVE_MESSAGE -> {
 
-                    Log.i("test", "receive message")
                     val message = intent.getStringExtra(BluetoothChatService.ARG_RECEIVE_MESSAGE)
                     val milliSecondsTime = System.currentTimeMillis()
                     chatFragment.communicate(Message(message, milliSecondsTime, Constants.MESSAGE_TYPE_RECEIVED))
                 }
-                BluetoothChatService.ACTION_SEND_MESSAGE->{
+                BluetoothChatService.ACTION_SEND_MESSAGE -> {
 
-                    Log.i("test", "send message")
                     val message = intent.getStringExtra(BluetoothChatService.ARG_WRITE_MESSAGE)
                     val milliSecondsTime = System.currentTimeMillis()
-                    chatFragment.communicate(Message(message, milliSecondsTime,Constants.MESSAGE_TYPE_SENT))
+                    chatFragment.communicate(Message(message, milliSecondsTime, Constants.MESSAGE_TYPE_SENT))
                 }
             }
-        }
-    }
-
-    private fun makeVisible() {
-        val discoverableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
-        discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
-        startActivity(discoverableIntent)
-
-    }
-
-    private fun searchDevices() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            // Android M Permission check 
-            if (checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) !=
-                    PackageManager.PERMISSION_GRANTED) {
-                AlertDialog.Builder(this)
-                        .setTitle(getString(R.string.need_loc_access))
-                        .setMessage(getString(R.string.please_grant_loc_access))
-                        .setPositiveButton(android.R.string.ok, null)
-                        .setOnDismissListener {
-                            // the dialog will be opened so we have to save that
-                            requestPermissions(arrayOf(
-                                    Manifest.permission.ACCESS_COARSE_LOCATION,
-                                    Manifest.permission.ACCESS_FINE_LOCATION
-                            ), PERMISSION_REQUEST_LOCATION)
-                        }.show()
-            } else {
-                startDiscovery()
-            }
-        } else {
-            startDiscovery()
         }
     }
 
@@ -270,7 +224,6 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
         // Request discover from BluetoothAdapter
         mBtAdapter?.startDiscovery()
     }
-
     // Create a BroadcastReceiver for ACTION_FOUND.
     private val mReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -325,12 +278,6 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                 headerLabelPaired.visibility = View.VISIBLE
 
             }
-            if (requestCode == PERMISSION_REQUEST_OVERLAY) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
-                    //
-                } else {
-                }
-            }
         }
     }
 
@@ -346,10 +293,12 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
                 } else {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         val builder = AlertDialog.Builder(this)
-                        builder.setTitle(getString(R.string.fun_limted))
-                        builder.setMessage(getString(R.string.since_perm_not_granted))
-                        builder.setPositiveButton(android.R.string.ok, null)
-                        builder.show()
+                        builder.apply {
+                            setTitle(getString(R.string.fun_limted))
+                            setMessage(getString(R.string.since_perm_not_granted))
+                            builder.setPositiveButton(android.R.string.ok, null)
+                            show()
+                        }
                     }
                 }
             }
@@ -378,8 +327,6 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
     override fun onStop() {
         super.onStop()
-        IsAcitivityOnstop = true
-        Log.i("test", IsAcitivityOnstop.toString())
         LocalBroadcastManager.getInstance(this).unregisterReceiver(mStateReceiver)
     }
 
@@ -429,5 +376,11 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
             val binder = service as OverlayService.LocalBinder
             mOverlayService = binder.service
         }
+    }
+
+    companion object {
+        private const val REQUEST_ENABLE_BT = 123
+        private const val PERMISSION_REQUEST_LOCATION = 123
+        private const val PERMISSION_REQUEST_OVERLAY = 134
     }
 }

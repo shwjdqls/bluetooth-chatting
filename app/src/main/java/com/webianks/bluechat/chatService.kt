@@ -1,4 +1,3 @@
-
 package com.webianks.bluechat
 
 import android.app.Service
@@ -22,15 +21,8 @@ class chatService : Service() {
         super.onStartCommand(intent, flags, startId)
         return START_STICKY
     }
-
     override fun onCreate() {
         if (locationManager == null)
             locationManager = applicationContext.getSystemService(Context.LOCATION_SERVICE) as LocationManager
     }
-
-    override fun onDestroy() {
-        super.onDestroy()
-    }
-
-
 }

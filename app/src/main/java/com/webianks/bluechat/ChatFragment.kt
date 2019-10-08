@@ -23,7 +23,6 @@ class ChatFragment : Fragment(), View.OnClickListener {
     private val messageList = arrayListOf<Message>()
 
 
-
     companion object {
         fun newInstance(): ChatFragment {
             val myFragment = ChatFragment()
@@ -35,7 +34,6 @@ class ChatFragment : Fragment(), View.OnClickListener {
 
 
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-
         val mView: View = LayoutInflater.from(activity).inflate(R.layout.chat_fragment, container, false)
         initViews(mView)
         return mView
@@ -78,15 +76,11 @@ class ChatFragment : Fragment(), View.OnClickListener {
     }
 
     override fun onClick(p0: View?) {
-
         if (chatInput.text.isNotEmpty()) {
             communicationListener?.onCommunication(chatInput.text.toString())
-
             chatInput.setText("")
-            Log.e("For Overlay Data", "OVERRAY DATA")
         }
     }
-
 
     fun setCommunicationListener(communicationListener: CommunicationListener) {
         this.communicationListener = communicationListener

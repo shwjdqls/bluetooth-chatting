@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+
 class DevicesRecyclerViewAdapter(val mDeviceList: List<DeviceData>, val context: Context) :
         RecyclerView.Adapter<DevicesRecyclerViewAdapter.VH>() {
 
@@ -18,29 +19,30 @@ class DevicesRecyclerViewAdapter(val mDeviceList: List<DeviceData>, val context:
     }
 
     override fun onBindViewHolder(holder: VH?, position: Int) {
-        holder?.label?.text = mDeviceList[position].deviceName ?: mDeviceList[position].deviceHardwareAddress
+        holder?.label?.text = mDeviceList[position].deviceName
+                ?: mDeviceList[position].deviceHardwareAddress
     }
 
     override fun getItemCount(): Int {
         return mDeviceList.size
     }
 
-    inner class VH(itemView: View?) : RecyclerView.ViewHolder(itemView){
+    inner class VH(itemView: View?) : RecyclerView.ViewHolder(itemView) {
 
         var label: TextView? = itemView?.findViewById(R.id.largeLabel)
 
         init {
-            itemView?.setOnClickListener{
+            itemView?.setOnClickListener {
                 listener?.itemClicked(mDeviceList[adapterPosition])
             }
         }
     }
 
-    fun setItemClickListener(listener: ItemClickListener){
+    fun setItemClickListener(listener: ItemClickListener) {
         this.listener = listener
     }
 
-    interface ItemClickListener{
+    interface ItemClickListener {
         fun itemClicked(deviceData: DeviceData)
     }
 }

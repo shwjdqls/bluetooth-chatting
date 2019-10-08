@@ -1,6 +1,6 @@
 package com.webianks.bluechat
 
-data class DeviceData(val deviceName: String?,val deviceHardwareAddress: String){
+data class DeviceData(val deviceName: String?, val deviceHardwareAddress: String) {
 
     override fun equals(other: Any?): Boolean {
         val deviceData = other as DeviceData
