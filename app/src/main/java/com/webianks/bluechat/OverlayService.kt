@@ -11,12 +11,11 @@ import android.support.v4.content.LocalBroadcastManager
 import android.util.Log
 import android.view.*
 import kotlinx.android.synthetic.main.popup.view.*
-
+/** Overlay service for receive message when MainActivity onStop*/
 class OverlayService : Service() {
     inner class LocalBinder : Binder() {
         val service: OverlayService = this@OverlayService
     }
-
     private val mBinder = LocalBinder()
 
     override fun onBind(intent: Intent?) = mBinder
@@ -71,12 +70,14 @@ class OverlayService : Service() {
             }
         }
     }
+    /** This is showing overlay view when 5sec later overlay will be disappear*/
     fun show() {
         mWindowManager.addView(mView, mParams)
         mHandler.postDelayed({
             mWindowManager.removeView(mView)
         }, 5000)
     }
+    /** This is disappear overlay*/
     fun hide() {
         mWindowManager.removeView(mView)
     }

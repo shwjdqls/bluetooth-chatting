@@ -52,7 +52,10 @@ class BluetoothChatService : Service() {
     private val NAME_SECURE = "BluetoothChatSecure"
     private val NAME_INSECURE = "BluetoothChatInsecure"
     private val localBroadcastManager = LocalBroadcastManager.getInstance(this)
-
+    /**
+     *  This is checking activity's state
+     *  @param activity Activity's class name which wonder activity's state
+     * */
     fun isActivityRunning(activity: String): Boolean {
         val activityManager: ActivityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val infos: List<ActivityManager.RunningTaskInfo> = activityManager.getRunningTasks(1)
@@ -61,6 +64,7 @@ class BluetoothChatService : Service() {
 
         return activity.equals(componentName.className)
     }
+    /** Send state to MainActivity */
     fun sendState() {
         val intent = Intent(INTENT_FILTER_MAIN)
         intent.apply {
@@ -111,9 +115,7 @@ class BluetoothChatService : Service() {
 
     /**
      * Start the ConnectThread to initiate a connection to a remote device.
-
      * @param device The BluetoothDevice to connect
-     * *
      * @param secure Socket Security type - Secure (true) , Insecure (false)
      */
 
@@ -141,9 +143,7 @@ class BluetoothChatService : Service() {
     }
     /**
      * Start the ConnectedThread to begin managing a Bluetooth connection
-
      * @param socket The BluetoothSocket on which the connection was made
-     * *
      * @param device The BluetoothDevice that has been connected
      */
     @Synchronized
@@ -203,9 +203,7 @@ class BluetoothChatService : Service() {
 
     /**
      * Write to the ConnectedThread in an unsynchronized manner
-
      * @param out The bytes to write
-     * *
      * @see ConnectedThread.write
      */
     fun write(out: ByteArray) {
@@ -340,8 +338,6 @@ class BluetoothChatService : Service() {
 
         }
     }
-
-
     /**
      * This thread runs while attempting to make an outgoing connection
      * with a device. It runs straight through; the connection either

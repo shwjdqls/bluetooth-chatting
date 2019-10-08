@@ -98,13 +98,13 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
             makeVisible()
         }
     }
-
+    /** Make another deivce to find my device when is your device bluetooth mode on */
     private fun makeVisible() {
         val discoverableIntent = Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE)
         discoverableIntent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 300)
         startActivity(discoverableIntent)
     }
-
+    /** Make your device to find another device which bluetooth mode on */
     private fun searchDevices() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             // Android M Permission check 
@@ -211,12 +211,11 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
             }
         }
     }
-
+    /** Discovering another device which can connect and show on List */
     private fun startDiscovery() {
         progressBar.visibility = View.VISIBLE
         headerLabel.text = getString(R.string.searching)
         mDeviceList.clear()
-
         // If we're already discovering, stop it
         if (mBtAdapter?.isDiscovering == true)
             mBtAdapter?.cancelDiscovery()
@@ -240,7 +239,6 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
 
                 devicesAdapter.notifyDataSetChanged()
             }
-
             if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED == action) {
                 progressBar.visibility = View.INVISIBLE
                 headerLabel.text = getString(R.string.found)
@@ -336,16 +334,11 @@ class MainActivity : AppCompatActivity(), DevicesRecyclerViewAdapter.ItemClickLi
             Toast.makeText(this, R.string.not_connected, Toast.LENGTH_SHORT).show();
             return
         }
-
         // Check that there's actually something to send
         if (message.isNotEmpty()) {
             // Get the message bytes and tell the BluetoothChatService to write
             val send = message.toByteArray()
             mChatService?.write(send)
-
-            // Reset out string buffer to zero and clear the edit text field
-            //mOutStringBuffer.setLength(0)
-            //mOutEditText.setText(mOutStringBuffer)
         }
     }
 

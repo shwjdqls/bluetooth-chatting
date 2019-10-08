@@ -22,22 +22,10 @@ class ChatFragment : Fragment(), View.OnClickListener {
     private lateinit var recyclerviewChat: RecyclerView
     private val messageList = arrayListOf<Message>()
 
-
-    companion object {
-        fun newInstance(): ChatFragment {
-            val myFragment = ChatFragment()
-            val args = Bundle()
-            myFragment.arguments = args
-            return myFragment
-        }
-    }
-
-
     override fun onCreateView(inflater: LayoutInflater?, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val mView: View = LayoutInflater.from(activity).inflate(R.layout.chat_fragment, container, false)
         initViews(mView)
         return mView
-
     }
 
     private fun initViews(mView: View) {
@@ -67,12 +55,9 @@ class ChatFragment : Fragment(), View.OnClickListener {
                 }
             }
         })
-
         sendButton.setOnClickListener(this)
-
         chatAdapter = ChatAdapter(messageList.reversed(), activity)
         recyclerviewChat.adapter = chatAdapter
-
     }
 
     override fun onClick(p0: View?) {
@@ -97,6 +82,15 @@ class ChatFragment : Fragment(), View.OnClickListener {
             recyclerviewChat.adapter = chatAdapter
             recyclerviewChat.scrollToPosition(0)
 
+        }
+    }
+
+    companion object {
+        fun newInstance(): ChatFragment {
+            val myFragment = ChatFragment()
+            val args = Bundle()
+            myFragment.arguments = args
+            return myFragment
         }
     }
 
